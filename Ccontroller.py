@@ -194,6 +194,15 @@ def client_handler(address, fd, events):
                 print "OFPT_QUEUE_GET_CONFIG_REPLY"
             elif rmsg.type == 24:
                 print "OFPT_CFEATURES_REPLY"
+                msg = of.ofp_features_reply(body[0:24])#length of reply msg
+                sock_dpid[fd]=msg.datapath_id
+                #msg.show()
+                port_info_raw = body[24:]
+                port_info = {}
+                print "port number:",len(port_info_raw)/74, "total length:", len(port_info_raw)
+                for i in range(len(port_info_raw)/74):
+                    port_info[i] = of.ofp_phy_cport(port_info_raw[i*74:74+i*74])
+                    print port_info[i].port_no 
                 #------------------------------------------------------JUST PRINT IST FIRST.
 
     if events & io_loop.WRITE:
@@ -242,4 +251,4 @@ if __name__ == '__main__':
         io_loop.start()
     except KeyboardInterrupt:
         io_loop.stop()
-        print "quit"
+        print "quit" 

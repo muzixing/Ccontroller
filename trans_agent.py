@@ -122,7 +122,7 @@ class switch():
                     msg = header/msg/msg_port                      #we calculate the number of the ports in convert.
                     self.dpid=msg.datapath_id
 
-                    data = convert.ofc2of(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
+                    data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
                     #self.dpid=msg.datapath_id
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                     self.queue_con.put(str(data))#put it into the queue of packet which need to send to controller.  
@@ -135,7 +135,7 @@ class switch():
                     #pkt_parsed.show()
                     #[port + id] --> [buffer_id + pkt_in_msg]
                     self.counter+=1
-                    if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
+                    if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP): #we can not pass this if.it needs a ARP packet
                         if isinstance(pkt_parsed.payload.payload, of.ICMP):
                             self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
                             #print "ping", self.buffer  
