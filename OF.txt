@@ -1,0 +1,38 @@
+OpenFlow Messages and Handling method
+
+1. OFP_HELLO
+    Get the OpenFlow version the switch is using.
+    Send a OFP_FEATURE_REQUEST message to switch.
+2. OFP_ECHO_REPLY
+    Pass.
+3. OFP_ECHO_REQUEST
+    Send a OFP_EHCO_REPLY message to switch.
+4. OFP_FLOW_REMOVED
+    Raise event 'FlowRemoved'.
+5. OFP_FEATURES_REPLY
+    Complex...
+    If no error, add the switch into known switch list.
+6. OFP_STATUS_REPLY
+    Raise event 'RawStatusReply'
+7. OFP_PORT_STATUS
+    Raise 'PortStatus' event
+8. OFP_PACKET_IN
+    Raise 'PacketIn' event
+9. OFP_ERROR_MSG
+    Raise error event, log
+10. OFP_BARRIER
+    Raise 'BarrierIn' event
+11. OFPST_DESC
+    Raise 'SwitchDescReceived' event
+12. OFPST_FLOW
+    Raise 'FlowStatsReceived' event
+13. OFPST_AGGREGATE
+    Raise 'AggregateFlowStatsReceived' event
+14. OFPST_TABLE
+    Raise 'TableStatsReceived' event
+15. OFPST_PORT
+    Raise 'PortStatsReceived' event
+16. OFPST_QUEUE
+    Raise 'QueueStatsReceived' event
+17. OFP_VENDOR
+    Add log
