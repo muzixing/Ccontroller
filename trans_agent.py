@@ -113,9 +113,8 @@ class switch():
                 rmsg = of.ofp_header(data[0:8])
                 #rmsg.show()
                 if rmsg.type == 6:
-                    print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
-                    print "rmsg.load:",len(body)/48
-                    header = ofc.header(data[0:8]) 
+                    print "OFPT_FEATURES_REPLY"     #Actually,we just need to change here.
+                    header = of.ofp_header(data[0:8]) 
                     print "ofp_features_reply.xid ", header.xid
                     msg = of.ofp_features_reply(data[8:32])#length of reply msg      corretly!
                     msg_port = of.ofp_features_reply(data[32:])
@@ -193,7 +192,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect(("localhost",6634))#controller's IP, better change it into an argument
+        sock_control.connect(("controllerIP",6634))#controller's IP, better change it into an argument
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
@@ -233,6 +232,7 @@ if __name__ == '__main__':
     sock.bind(("", 6633))
     sock.listen(6633)
     num = 0
+    controllerIP="192.168.0.3"
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()

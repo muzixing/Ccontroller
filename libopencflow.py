@@ -188,7 +188,7 @@ uint64_t     peer_datapath_id;         /
 OFP_ASSERT(sizeof(struct ofp_phy_cport) == 72); 
 """
 class sup_wave_port_bandwidth(Packet):
-  """this class is the Extensions for circuit switch ports"""
+    """this class is the Extensions for circuit switch ports"""
     name = "sup_wave_port_bandwidth"
     fields_desc = [BitField("center_freq_lmda", 0, 32),
                    BitField("num_lmda", 0, 8),
@@ -200,7 +200,7 @@ class sup_wave_port_bandwidth(Packet):
 
 class ofp_phy_cport(Packet):
     sw_grain = []
-    name = "OpenFlow Port"
+    name = "OpenFlow Cport"
     fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
                   MACField("hw_addr", 0),
                   StrFixedLenField("port_name", None, length=16), #OTN port name
@@ -247,7 +247,7 @@ class ofp_phy_cport(Packet):
                   BitField("SUPP_SW_GRAN", 0, 16),
 
                   BitField("sup_sdh_port_bandwidth", 0, 8),
-                  BitField("sup_otn_port_bandwidth", 0, 8)
+                  BitField("sup_otn_port_bandwidth", 0, 8),
                   BitField("peer_port_no", 0, 16),
                   BitField("peer_datapath_id", 0, 64)  
                   #finished    It is correctly!
@@ -402,8 +402,9 @@ class ofp_cfeatures_reply(Packet):
     fields_desc=[ BitFieldLenField('datapath_id', None, 64, length_of='varfield'),
                   BitFieldLenField('n_buffers', None, 32, length_of='varfield'),
                   XByteField("n_tables", 0),
-                  XBitField("n_cports", 0),#  there is some difference right here.
-                  X2BytesField("pad", 0),
+                  XByteField("n_cports", 0),#  there is some difference right here.
+                  XByteField("pad", 0),
+                  XByteField("pad.1", 0),
                   #features
                   BitField("OFPC_OTN_SWITCH", 0, 1),    #1<<31
                   BitField("OFPC_WAVE_SWITCH", 0, 1),   #1<<30

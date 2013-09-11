@@ -3,6 +3,8 @@
 
 import libopenflow as of
 import libopencflow as ofc
+import functools
+
 
 def of2ofc(msg, buffer, dpid):
     print "of->ofc converting"
@@ -26,19 +28,17 @@ def of2ofc(msg, buffer, dpid):
             #how to convert?
             #buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             #del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = msg[8:32]
-            port_info = msg[32:]
-            port_num = len(port_info)/48    #we need to know how many ports.       
-            phy_port = {}
-            cphy_port = {}
-            cfeatures_reply = ofc.cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
+            pkt_parsed = msg.payload
+            port_info = msg.payload.payload
+            
+            cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
-                                                  n_tables = pkt_parsed.n_tables
+                                                  n_tables = pkt_parsed.n_tables,
                                                   n_cports = port_num,
                                                   #features
-                                                  OFPC_OTN_SWITCH = pkt_parsed.OFPC_OTN_SWITCH,#1<<31
-                                                  OFPC_WAVE_SWITCH = pkt_parsed.OFPC_WAVE_SWITCH,   #1<<30
-                                                  NOT_DEFINED = pkt_parsed.NOT_DEFINED,
+                                                  OFPC_OTN_SWITCH = 1,#1<<31
+                                                  OFPC_WAVE_SWITCH = 0,   #1<<30
+                                                  NOT_DEFINED = 0,
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
                                                   OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,  #1<<6 Queue statistics
                                                   OFPC_IP_STREAM = pkt_parsed.OFPC_IP_STREAM,     #1<<5 Can reassemble IP fragments
@@ -49,8 +49,11 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,    #1<<0 Flow statistics
                                                   actions = pkt_parsed.actions)
             #cfeatures_reply has been built successfully
+            port_num = len(port_info)/48    #we need to know how many ports.       
+            phy_port = {}
+            cphy_port = {}
             for i in xrange(port_num):  #start from 0 or 1?
-                phy_port[i] = of.ofp_phy_port(port_info[(i*48):(48+x*48)]) 
+                phy_port[i] = of.ofp_phy_port(port_info[(i*48):(48+i*48)]) 
                 print phy_port[i].port_no  
                 cphy_port[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no,
                                                   hw_addr = phy_port[i].hw_addr,
