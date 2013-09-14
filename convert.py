@@ -3,9 +3,8 @@
 
 import libopenflow as of
 import libopencflow as ofc
-from scapy.all import *
 import functools
-import Queue
+
 
 def of2ofc(msg, buffer, dpid):
     print "of->ofc converting"
@@ -24,25 +23,20 @@ def of2ofc(msg, buffer, dpid):
             print "1"
         if isinstance(msg.payload, of.ofp_features_reply):
             print"it is a ofp_features_reply packet!"
-            #basic structure:0fc.ofp_header()/ofc.ofp_cfeatures_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 
+            #basic structure:0fc.ofp_header()/ofc.ofp_features_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 
             #we select the right field to fix our new packet.
             #how to convert?
             #buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             #del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = msg.payload#feature_reply
+            pkt_parsed = msg.payload
             port_info = msg.payload.payload
-            #print port_info
-            print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id
-            port_raw=str(port_info)
-            port_num = len(port_raw)/48  
-            print port_num    #we need to know how many ports. 
-            #port_num=2# we assume that.
+            
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
                                                   n_tables = pkt_parsed.n_tables,
                                                   n_cports = port_num,
                                                   #features
-                                                  OFPC_OTN_SWITCH = 1,#1<<31  if it is a otn switch
+                                                  OFPC_OTN_SWITCH = 1,#1<<31
                                                   OFPC_WAVE_SWITCH = 0,   #1<<30
                                                   NOT_DEFINED = 0,
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
@@ -55,37 +49,21 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,    #1<<0 Flow statistics
                                                   actions = pkt_parsed.actions)
             #cfeatures_reply has been built successfully
-            #print cfeatures_reply.datapath_id,cfeatures_reply.OFPC_OTN_SWITCH
-            #print port_info.port_no
-            #print len(port_info)
-
-                  
+            port_num = len(port_info)/48    #we need to know how many ports.       
             phy_port = {}
-            print "port_info"
-            phy_cport = {}
+            cphy_port = {}
             for i in xrange(port_num):  #start from 0 or 1?
-                phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
-                #print phy_port[i].port_no  
-                phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, #we defined it
+                phy_port[i] = of.ofp_phy_port(port_info[(i*48):(48+i*48)]) 
+                print phy_port[i].port_no  
+                cphy_port[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no,
                                                   hw_addr = phy_port[i].hw_addr,
                                                   port_name = phy_port[i].port_name,
-                                                  #config 
-                                                  not_defined = phy_port[i].not_defined,
-                                                  OFPPC_NO_PACKET_IN = phy_port[i].OFPPC_NO_PACKET_IN,
-                                                  OFPPC_NO_FWD = phy_port[i].OFPPC_NO_FWD,
-                                                  OFPPC_NO_FLOOD = phy_port[i].OFPPC_NO_FLOOD,
-                                                  OFPPC_NO_RECV_STP =phy_port[i].OFPPC_NO_RECV_STP,
-                                                  OFPPC_NO_RECV = phy_port[i].OFPPC_NO_RECV,
-                                                  OFPPC_NO_STP = phy_port[i].OFPPC_NO_STP,
-                                                  OFPPC_PORT_DOWN =phy_port[i].OFPPC_PORT_DOWN,
-                                                  #state 
-                                                  not_defined_state = 0,
-                                                  OFPPS_LINK_DOWN = 0,
-                                                  #curr=not defined
-                                                  curr = 0,
-                                                  advertised = 0,#phy_port[i].advertised,
-                                                  supported = 0,#phy_port[i].supported,
-                                                  peer = 0,
+                                                  config = phy_port[i].config,
+                                                  state = phy_port[i].state,
+                                                  curr = phy_port[i].curr,
+                                                  advertised = phy_port[i].advertised,
+                                                  supported = phy_port[i].supported,
+                                                  peer = phy_port[i].peer,
                                                   #expend for circuit switch ports.
                                                   OFPST_FIBER = 0,   # 1<<15 can switch circuits based on SM/MM fiber
                                                   OFPST_WAVE = 0,     # 1<<14 can switch circuits based on ITU-T lambdas
@@ -105,14 +83,14 @@ def of2ofc(msg, buffer, dpid):
                                                   peer_port_no = 0,
                                                   peer_datapath_id = 0)\
                                 /ofc.sup_wave_port_bandwidth(center_freq_lmda = 0,
-                                                             num_lmda = 1,#just for showing.
+                                                             num_lmda = 0,
                                                              freq_space_lmda = 0
                                                              )
-                print phy_cport[i].port_no,phy_port[i].port_no 
-                cfeatures_reply =cfeatures_reply/phy_cport[i]     #combined it
+                cfeatures_reply =cfeatures_reply/cphy_port[i]   
                 
-            cfeatures_reply = ofc.ofp_header(type = 24, length =port_num*74+32,)/cfeatures_reply
-            return cfeatures_reply #we should use for loop in here.
+            cfeatures_reply = ofc.ofp_header(type = 24, lenth =port_num*74+32,)/cfeatures_reply
+            return cfeatures_reply
+  #we should use for loop in here.
 
 def ofc2of(msg, buffer, dpid):
     print "ofc->ofconverting"
@@ -242,11 +220,10 @@ if __name__ == "__main__":
     # this convert (can) only match in-coming port and vlan
     
     # 1. packet_in message
-    pkt_in_msg = ofc.ofp_header(type=6,length=104)/ofc.ofp_cfeatures_reply(datapath_id=1)/ofc.ofp_phy_cport()/ofc.sup_wave_port_bandwidth()
+    pkt_in_msg = of.ofp_header(type=14,length=88)/of.ofp_packet_in(in_port=1,buffer_id=128, total_len=10)
     #pkt_in_msg.show()
-    ofc_pkt = of2ofc(pkt_in_msg, pkt_in_msg.datapath_id, 10) # get buffer_id
-    print ofc_pkt
-    """
+    of2ofc(pkt_in_msg, buffer_id) # get buffer_id
+    
     ofc_pkt = ofc.ofp_header()\
           /ofc.ofp_cflow_mod()\
           /ofc.ofp_connect_wildcards()\
@@ -254,14 +231,12 @@ if __name__ == "__main__":
           /of.ofp_action_header(type=3)\
           /of.ofp_action_output(type=0, port=0xfffb, len=8)
     #ofc_pkt.show()
-    """
     print buffer_id
-
     # 2. parse ofc message
-   # of_pkt = ofc2of(ofc_pkt, buffer_id, dpid)
+    of_pkt = ofc2of(ofc_pkt, buffer_id)
     
     # 3. print of message
-   # of_pkt.show()
+    of_pkt.show()
     
     """
     print ofc2of_dict_odu[0](1)

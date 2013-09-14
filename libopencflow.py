@@ -130,7 +130,7 @@ ofp_stats_types = { 0: "OFPST_DESC",
 class ofp_phy_port(Packet):
     name = "OpenFlow Port"
     fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
-                  MACField("hw_addr", "00:00:00:00:00:00"),
+                  MACField("hw_addr", 0),
                   StrFixedLenField("port_name", None, length=16),
                   #StrField("port_name", None, fmt="H", remain=24),
                   #BitFieldLenField('port_name', None, 128, length_of='varfield'),
@@ -188,18 +188,21 @@ uint64_t     peer_datapath_id;         /
 OFP_ASSERT(sizeof(struct ofp_phy_cport) == 72); 
 """
 class sup_wave_port_bandwidth(Packet):
+    """this class is the Extensions for circuit switch ports"""
     name = "sup_wave_port_bandwidth"
-    fields_desc = [ BitField("center_freq_lmda", 0, 32),
-                    BitField("num_lmda", 0, 8),
-                    BitField("freq_space_lmda", 0, 8),
-                    XByteField("pad1.1", 0),
-                    XByteField("pad1.2", 0)]
+    fields_desc = [BitField("center_freq_lmda", 0, 32),
+                   BitField("num_lmda", 0, 8),
+                   BitField("freq_space_lmda", 0, 8),
+                   #Padding to align to 64 bits
+                   XByteField("pad1.1", 0),      
+                   XByteField("pad1.2", 0)]
+#we add the class above to discribe the port in OTN    
 
 class ofp_phy_cport(Packet):
     sw_grain = []
     name = "OpenFlow Cport"
     fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
-                  MACField("hw_addr", "00:00:00:00:00:00"),
+                  MACField("hw_addr", 0),
                   StrFixedLenField("port_name", None, length=16), #OTN port name
 
                   BitField("not_defined", 0, 25),
@@ -212,11 +215,11 @@ class ofp_phy_cport(Packet):
                   BitField("OFPPC_PORT_DOWN", 0, 1),
                   
                   #uint32_t for state
-                  BitField("not_defined_state", 0, 31),
+                  BitField("else", 0, 31),
                   BitField("OFPPS_LINK_DOWN", 0, 1),
 
                   #uint32_t for Current features
-                  BitField("curr", 0, 32),
+                  BitField("not_defined", 0, 32),
                   
                   #uint32_t for features being advised by the port
                   BitField("advertised", 0, 32),
@@ -247,7 +250,7 @@ class ofp_phy_cport(Packet):
                   BitField("sup_otn_port_bandwidth", 0, 8),
                   BitField("peer_port_no", 0, 16),
                   BitField("peer_datapath_id", 0, 64)  
-                  #finished    It is correct!
+                  #finished    It is correctly!
                   ]
 
     # 
@@ -400,8 +403,8 @@ class ofp_cfeatures_reply(Packet):
                   BitFieldLenField('n_buffers', None, 32, length_of='varfield'),
                   XByteField("n_tables", 0),
                   XByteField("n_cports", 0),#  there is some difference right here.
-                  XByteField("pad2.0", 0),
-                  XByteField("pad2.1",0),
+                  XByteField("pad", 0),
+                  XByteField("pad.1", 0),
                   #features
                   BitField("OFPC_OTN_SWITCH", 0, 1),    #1<<31
                   BitField("OFPC_WAVE_SWITCH", 0, 1),   #1<<30
@@ -617,31 +620,14 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 """
     
 if __name__ == '__main__':
-    import convert
-    import libopenflow as of 
-    #a = ofp_cfeatures_reply()
-    #b = ofp_phy_cport()
-    #c = ofp_phy_cport()
-    #d=ofp_header(type =24,length = 32+78*2)/ofp_cfeatures_reply(n_cports=2)/ofp_phy_cport()/sup_wave_port_bandwidth(num_lmda=4)/ofp_phy_cport()/sup_wave_port_bandwidth(num_lmda=5)
-
-    #d.show()
-    #a.n_cports=2
-    #a.OFPC_TABLE_STATS=100
-    #a.OFPST_T_OTN = 1
-    #a.SUPP_SW_GRAN = 129
-    #print a.SUPP_SW_GRAN
-    buffer = {}
-    dpid = 8
-
-    e = of.ofp_header(type =6)/of.ofp_features_reply(datapath_id=2)/of.ofp_phy_port(port_no=1)/of.ofp_phy_port(port_no=2)\
-                              /of.ofp_phy_port(port_no=3)/of.ofp_phy_port(port_no=4)/of.ofp_phy_port(port_no=5)
-    f = convert.of2ofc(e, buffer, dpid)
-    f.show()
-    #a.show()
-    #a.show_sw_grain()
+    a = ofp_phy_cport()
+    a.OFPST_T_OTN = 1
+    a.SUPP_SW_GRAN = 129
+    print a.SUPP_SW_GRAN
+    a.show()
+    a.show_sw_grain()
     
-    """
-       #           8            8                     2                74
+    #           8            8                     2                74
     cmod = ofp_header()/ofp_cflow_mod()/ofp_connect_wildcards()/ofp_connect()
     cmod.show()
     print "len of header:", len(str(ofp_header()))
@@ -654,8 +640,8 @@ if __name__ == '__main__':
     print string, len(string)
     pars = ofp_header(string)
     pars.show()
-    """
-    #import convert
+    
+    import convert
     """
     a = ofp_header()
     a.show()
