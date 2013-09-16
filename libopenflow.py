@@ -150,7 +150,7 @@ ofp_stats_types = { 0: "OFPST_DESC",
 class ofp_phy_port(Packet):
     name = "OpenFlow Port"
     fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
-                  MACField("hw_addr", 0),
+                  MACField("hw_addr", "00:00:00:00:00:00"),
                   StrFixedLenField("port_name", None, length=16),
  
                   BitField("not_defined", 0, 25),
