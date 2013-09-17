@@ -70,9 +70,9 @@ class switch():
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
-                    actions = data[92:]
+                    actions = data[92:]# what do you do about the actions?  use for nothing?
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
-                    data = convert.of2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
+                    data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
                     print "flow_mod_msg xid:", header.xid
                     #data.show()
                 #if rmsg.type == 6: #OFPT_FEATURES_REPLY 
@@ -85,7 +85,8 @@ class switch():
                     #msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect
                     #data = convert.ofc2of(msg, self.buffer, self.dpid)
                     #print "flow_mod_msg xid:", header.xid
-
+                    
+                #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                 self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
     
@@ -115,7 +116,7 @@ class switch():
                 if rmsg.type == 6:
                     print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
                     #print "rmsg.load:",len(body)/48
-                    header = ofc.header(data[0:8]) 
+                    header = of.ofp_header(data[0:8]) 
                     print "ofp_features_reply.xid ", header.xid
                     msg = of.ofp_features_reply(data[8:32])#length of reply msg      corretly!
                     msg_port = data[32:]
@@ -136,7 +137,7 @@ class switch():
                     #pkt_parsed.show()
                     #[port + id] --> [buffer_id + pkt_in_msg]
                     self.counter+=1
-                    if isinstance(pkt_parsed.payddddload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
+                    if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                         if isinstance(pkt_parsed.payload.payload, of.ICMP):
                             self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
                             #print "ping", self.buffer  
@@ -194,7 +195,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect(("localhost",6634))#controller's IP, better change it into an argument
+        sock_control.connect((controllerIP,6634))#controller's IP, better change it into an argument
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
@@ -234,6 +235,7 @@ if __name__ == '__main__':
     sock.bind(("", 6633))
     sock.listen(6633)
     num = 0
+    controllerIP = "192.168.0.3"
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()

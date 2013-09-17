@@ -62,13 +62,14 @@ def client_handler(address, fd, events):
                 print "OFPT_FEATURES_REPLY"
                 #print "rmsg.load:",len(body)/48
                 msg = of.ofp_features_reply(body[0:24])#length of reply msg
-                sock_dpid[fd]=msg.datapath_id
+                sock_dpid[fd]=msg.datapath_id                                #sock_dpid[fd] comes from here.
                 #msg.show()
-                port_info_raw = body[24:]
+                port_info_raw = str(body[24:])                             #we change it 
                 port_info = {}
                 print "port number:",len(port_info_raw)/48, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/48):
                     port_info[i] = of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
+                    print port_info[i].port_no     #show it
 
             elif rmsg.type == 2:
                 print "OFPT_ECHO_REQUEST"
@@ -200,9 +201,10 @@ def client_handler(address, fd, events):
                 #msg.show()
                 port_info_raw = body[24:]
                 port_info = {}
-                print "port number:",len(port_info_raw)/74, "total length:", len(port_info_raw)
-                for i in range(len(port_info_raw)/74):
-                    port_info[i] = ofc.ofp_phy_cport(port_info_raw[0+i*48:48+i*48])
+                print "port number:",len(port_info_raw)/72, "total length:", len(port_info_raw)
+                for i in range(len(port_info_raw)/72):
+                    port_info[i] = ofc.ofp_phy_cport(port_info_raw[i*72:72+i*72])
+                    print "port_no:",port_info[i].port_no,"i:",i
 
                 #------------------------------------------------------JUST PRINT IST FIRST.
 
