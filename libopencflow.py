@@ -195,6 +195,8 @@ class sup_wave_port_bandwidth(Packet):
                     XByteField("pad1.1", 0),
                     XByteField("pad1.2", 0)]
 
+#_________________________________________________This is a new packet on OTN ,you need to pay attention.___________________________
+
 class ofp_phy_cport(Packet):
     sw_grain = []
     name = "OpenFlow Cport"
@@ -386,6 +388,9 @@ class ofp_features_reply(Packet):
                   #port info can be resoved at TCP server
                 ]
 bind_layers( ofp_header, ofp_features_reply, type=6 )
+
+#_________________________________________________This is a new packet on OTN ,you need to pay attention.___________________________
+
 #No. 24
 class ofp_cfeatures_reply(Packet):
     name = "OpenFlow Switch CFeatures Reply"
@@ -517,6 +522,10 @@ class ofp_flow_stats_data(Packet):
                   BitField("cookie", 0, 64),
                   BitField("packet_count", 0, 64),
                   BitField("byte_count", 0, 64)]# following ofp_action_header
+
+
+#_________________________________________________This is a new packet on OTN ,you need to pay attention.___________________________
+
 
 # of.ofp_header()/of.ofp_cflow_mod()/of.ofp_flow_wildcards()/of.ofp_match()/ofp_connect()/of.ofp_action_output()...
 # No. 0xff

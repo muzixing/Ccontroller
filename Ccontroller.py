@@ -34,7 +34,6 @@ def handle_connection(connection, address):
 
 def client_handler(address, fd, events):
     sock = fd_map[fd]
-    #print sock, sock.getpeername(), sock.getsockname()
     if events & io_loop.READ:
         data = sock.recv(1024)
         if data == '':
@@ -48,7 +47,6 @@ def client_handler(address, fd, events):
                 body = data[8:]
             else:
                 rmsg = of.ofp_header(data)
-            #rmsg.show()
             if rmsg.type == 0:
                 print "OFPT_HELLO"
                 msg = of.ofp_header(type = 5)
@@ -60,23 +58,22 @@ def client_handler(address, fd, events):
                 of.ofp_error_msg(body).show()
             elif rmsg.type == 6:
                 print "OFPT_FEATURES_REPLY"
-                #print "rmsg.load:",len(body)/48
-                msg = of.ofp_features_reply(body[0:24])#length of reply msg
-                sock_dpid[fd]=msg.datapath_id                                #sock_dpid[fd] comes from here.
+                msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
+                sock_dpid[fd]=msg.datapath_id                             #sock_dpid[fd] comes from here.
                 #msg.show()
-                port_info_raw = str(body[24:])                             #we change it 
+                port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
                 port_info = {}
                 print "port number:",len(port_info_raw)/48, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/48):
                     port_info[i] = of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
-                    print port_info[i].port_no     #show it
+                    print port_info[i].port_no     
 
             elif rmsg.type == 2:
                 print "OFPT_ECHO_REQUEST"
                 msg = of.ofp_header(type=3, xid=rmsg.xid)
                 
                 #test for status request [which is good]
-                global exe_id
+                global exe_id 
                 global ofp_match_obj
                 
                 message_queue_map[sock].put(str(msg))
@@ -119,25 +116,9 @@ def client_handler(address, fd, events):
                             cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
                             cflow_mod.payload.payload.payload.wport_out = 0xfffb
                             cflow_mod.payload.payload.payload.num_wave_out = grain
-                        #cflow_mod.show()
+                    
                         message_queue_map[sock].put(str(cflow_mod))
                         io_loop.update_handler(fd, io_loop.WRITE)
-                        
-                    
-                    """if sock_dpid[fd] == 1:
-                        # from sw1
-                        if pkt_in_msg.in_port == 2:
-                            #from sw2 -> sw1
-                        elif pkt_in_msg.in_port == 1:
-                            #from host1 -> sw1
-                    elif sock_dpid[fd] == 2:
-                        # from sw2
-                        if pkt_in_msg.in_port == 2:
-                            #from sw1 -> sw2
-                        elif pkt_in_msg.in_port == 1:
-                            #from host2 -> sw2"""
-                                
-                    #nport_in=1, supp_sw_otn_gran_in=1, in_port=1
 
             elif rmsg.type == 11: 
                 print "OFPT_FLOW_REMOVED"
@@ -169,7 +150,6 @@ def client_handler(address, fd, events):
                 # should first judge action type 
                 i = 0
                 reply_body_action = []
-                #print len(body[92:])
                 while i<len(body[92:]):
                     if body[95+i:96+i]==0x08:
                         print "0x08"
@@ -206,7 +186,7 @@ def client_handler(address, fd, events):
                     port_info[i] = ofc.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
 
-                #------------------------------------------------------JUST PRINT IST FIRST.
+                #------------------------------------------------------We finish the actions of manipulateing___________________________
 
     if events & io_loop.WRITE:
         try:

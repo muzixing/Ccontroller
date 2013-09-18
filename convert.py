@@ -6,6 +6,10 @@ import libopencflow as ofc
 from scapy.all import *
 import functools
 import Queue
+import setting 
+
+#_________________________________________________________of2ofc() uses for coverting the of packets to ofc's________________________________________
+
 
 def of2ofc(msg, buffer, dpid):
     print "of->ofc converting"
@@ -17,34 +21,28 @@ def of2ofc(msg, buffer, dpid):
             #only need the ofp_header()/ofp_packet_in() part of the msg
             print "packet in from port", msg.payload.in_port
             buffer[msg.payload.in_port] = msg.payload.buffer_id
-            #print buffer_id
+            
         if isinstance(msg.payload, of.ofp_flow_mod):
             #basic structure: of.ofp_header()/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_mod()/other_ofp_actions()
             #select info from match (VLAN) and actions (just copy)
             print "1"
         if isinstance(msg.payload, of.ofp_features_reply):
-            print"it is a ofp_features_reply packet!"
-            #we still need buffer{}
+            print"it is a ofp_features_reply packet"
             
             #basic structure:0fc.ofp_header()/ofc.ofp_cfeatures_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 
             #we select the right field to fix our new packet.
-            #how to convert?
-            #buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            #del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = msg.payload#feature_reply
+            pkt_parsed = msg.payload                        #feature_reply
             port_info = msg.payload.payload
-            #print port_info
             print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id
             port_raw=str(port_info)
             port_num = len(port_raw)/48  
-            print port_num    #we need to know how many ports. 
-            #port_num=2# we assume that.
+            print port_num                                            #we need to know how many ports. 
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
                                                   n_tables = pkt_parsed.n_tables,
                                                   n_cports = port_num,
                                                   #features
-                                                  OFPC_OTN_SWITCH = 1,#1<<31  if it is a otn switch
+                                                  OFPC_OTN_SWITCH = 1,    #1<<31  if it is a otn switch
                                                   OFPC_WAVE_SWITCH = 0,   #1<<30
                                                   NOT_DEFINED = 0,
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
@@ -56,19 +54,13 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_TABLE_STATS = pkt_parsed.OFPC_TABLE_STATS,  #1<<1 Table statistics
                                                   OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,    #1<<0 Flow statistics
                                                   actions = pkt_parsed.actions)
-            #cfeatures_reply has been built successfully
-            #print cfeatures_reply.datapath_id,cfeatures_reply.OFPC_OTN_SWITCH
-            #print port_info.port_no
-            #print len(port_info)
 
-                  
             phy_port = {}
-            print "port_info"
             phy_cport = {}
-            for i in xrange(port_num):  #start from 0 or 1?
+            for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
-                #print phy_port[i].port_no  
-                phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, #we defined it
+                sw[i] =creat_sw()
+                phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,
                                                   port_name = phy_port[i].port_name,
                                                   #config 
@@ -85,36 +77,39 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPPS_LINK_DOWN = 0,
                                                   #curr=not defined
                                                   curr = 0,
-                                                  advertised = 0,#phy_port[i].advertised,
-                                                  supported = 0,#phy_port[i].supported,
+                                                  advertised = 0,
+                                                  supported = 0,
                                                   peer = 0,
                                                   #expend for circuit switch ports.
-                                                  OFPST_FIBER = 0,   # 1<<15 can switch circuits based on SM/MM fiber
-                                                  OFPST_WAVE = 0,     # 1<<14 can switch circuits based on ITU-T lambdas
-                                                  OFPST_T_OTN = 0,    # 1<<13 can switch circuits based on OTN standard
-                                                  OFPST_T_SDH = 0,  # 1<<12 can switch circuits based on SDH standard
-                                                  OFPST_T_SONET = 0,  # 1<<11 can switch circuits based on SONET standard
-                                                  NOT_DEFINED = 0,  # Not used
-                                                  OFPST_ETH = 0,  # 1<<4 can switch packets based on ETH headers
-                                                  OFPST_VLAN = 0,  # 1<<3 can switch packets based on VLAN tags
-                                                  OFPST_MPLS = 0,  # 1<<2 can switch packets based on MPLS labels
-                                                  OFPST_IP = 0,  # 1<<1 can switch packets based on IP headers 
-                                                  OFPST_L4 = 0,  # 1<<0 can switch packets based on TCP/UDP headers
+                                                  OFPST_FIBER = sw[i].OFPST_FIBER,   # 1<<15 can switch circuits based on SM/MM fiber
+                                                  OFPST_WAVE = sw[i].OFPST_WAVE,     # 1<<14 can switch circuits based on ITU-T lambdas
+                                                  OFPST_T_OTN = sw[i].OFPST_T_OTN,    # 1<<13 can switch circuits based on OTN standard
+                                                  OFPST_T_SDH = sw[i].OFPST_T_SDH,  # 1<<12 can switch circuits based on SDH standard
+                                                  OFPST_T_SONET = sw[i].OFPST_T_SONET,  # 1<<11 can switch circuits based on SONET standard
+                                                  NOT_DEFINED = sw[i].NOT_DEFINED,  # Not used
+                                                  OFPST_ETH = sw[i].OFPST_ETH,  # 1<<4 can switch packets based on ETH headers
+                                                  OFPST_VLAN = sw[i].OFPST_VLAN,  # 1<<3 can switch packets based on VLAN tags
+                                                  OFPST_MPLS = sw[i].OFPST_MPLS,  # 1<<2 can switch packets based on MPLS labels
+                                                  OFPST_IP = sw[i].OFPST_IP,  # 1<<1 can switch packets based on IP headers 
+                                                  OFPST_L4 = sw[i].OFPST_L4,  # 1<<0 can switch packets based on TCP/UDP headers
 
                                                   SUPP_SW_GRAN = 0,  #use for defined something ,waiting a second.
                                                   sup_sdh_port_bandwidth = 0,
                                                   sup_otn_port_bandwidth = 0,
                                                   peer_port_no = 0,
                                                   peer_datapath_id = 0)\
-                                /ofc.sup_wave_port_bandwidth(center_freq_lmda = 0,
-                                                             num_lmda = 1,#just for showing.
-                                                             freq_space_lmda = 0
+                                /ofc.sup_wave_port_bandwidth(center_freq_lmda = sw[i].center_freq_lmda,
+                                                             num_lmda = sw[i].num_lmda,
+                                                             freq_space_lmda = sw[i].freq_space_lmda
                                                              )
                 print phy_cport[i].port_no,phy_port[i].port_no 
-                cfeatures_reply =cfeatures_reply/phy_cport[i]     #combined it
+                cfeatures_reply =cfeatures_reply/phy_cport[i]    
                 
             cfeatures_reply = ofc.ofp_header(type = 24, length =port_num*74+32,)/cfeatures_reply
-            return cfeatures_reply #we should use for loop in here.
+            return cfeatures_reply 
+
+#_________________________________________________________ofc2of() uses for coverting the ofc packets to of's________________________________________
+
 
 def ofc2of(msg, buffer, dpid):
     print "ofc->ofconverting"
@@ -128,17 +123,11 @@ def ofc2of(msg, buffer, dpid):
             #ODU0 = 0, ODU1 = 1 ...
             
             # [port + id] --> [buffer_id + pkt_in_msg]  
-            #print buffer
             buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             pkt_parsed = pkt.payload.payload
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                    #print isinstance(pkt_parsed.payload, of.Dot1Q)
-                    #print pkt_parsed.payload.vlan   
                     if isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
-                        #print "dpid:", sock_dpid[fd]
-                        #pkt_parsed.show()
-                        
                         flow_mod_msg = of.ofp_header(type=14,
                                                      length=88,)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
@@ -168,25 +157,17 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=0,
                                                         hard_timeout=60,
-                                                        buffer_id=buffer_id,#icmp type 8: request, 0: reply
+                                                        buffer_id=buffer_id,
                                                         flags=1)
                         
                         if msg.payload.payload.payload.nport_out:
                             port = msg.payload.payload.payload.nport_out
                         elif msg.payload.payload.payload.wport_out:
                             port = msg.payload.payload.payload.wport_out
-                        #if (not isinstance(pkt_parsed.payload, of.IP)) and pkt_parsed.payload.src =="10.0.0.1" and dpid == 2: # have VLAN and from node 2 -> 1 @s2 (rm vlan)
-                            #print "1->2 @s2"
-                            #flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        
-                        #elif (not isinstance(pkt_parsed.payload, of.IP)) and pkt_parsed.payload.src =="10.0.0.2" and dpid == 1: # have VLAN and from node 2 -> 1 (rm vlan)
-                            #print "1<-2 @s1"
                         flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        
-                        #flow_mod_msg.show()
                         return flow_mod_msg
+
                     elif isinstance(pkt_parsed.payload.payload, of.ICMP):
-                        
                         flow_mod_msg = of.ofp_header(type=14,
                                                      length=88,)\
                                        /of.ofp_flow_wildcards()\
@@ -204,7 +185,7 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=0,
                                                         hard_timeout=60,
-                                                        buffer_id=buffer_id,#icmp type 8: request, 0: reply
+                                                        buffer_id=buffer_id,
                                                         flags=1)
                         
                         if msg.payload.payload.payload.nport_out:
@@ -213,18 +194,10 @@ def ofc2of(msg, buffer, dpid):
                         elif msg.payload.payload.payload.wport_out:
                             vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
                             port = msg.payload.payload.payload.wport_out
-                        # h1 -> (add vlan)of_switch(rm vlan) -> h2
-                        #if isinstance(pkt_parsed.payload, of.IP) and pkt_parsed.payload.src == "10.0.0.1" and dpid == 1: # not VLAN and from node 1 -> 2 @s1(add vlan)
-                        #   print "1->2 @s1"
-                        #   flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)                            
-                        
-                        # h1 <- (rm vlan)of_switch(add vlan) <- h2
-                        #elif isinstance(pkt_parsed.payload, of.IP) and pkt_parsed.payload.src == "10.0.0.2" and dpid == 2: # not VLAN and from node 1 -> 2 @s2(add vlan)
-                        #   print "1<-2 @s2"
                         flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
-                        #flow_mod_msg.show()
                         return flow_mod_msg
-                            
+#_____________________________________________________The rule of converting_____________________________________________________                          
+
 buffer_id = {}
 
 of2ofc_dict = {
@@ -236,10 +209,9 @@ ofc2of_dict_odu = { 0: lambda x:x+2000,
                     3: lambda x:x+2300}
 
 ofc2of_dict_wave = lambda x:x+3000
-        
-#of.ofp_header().show()
-#ofc.ofp_header().show()
 
+
+# ________________________________The code below is just for test,and you have no need to read it._______________________________________________________
 if __name__ == "__main__":
     # this convert (can) only match in-coming port and vlan
     

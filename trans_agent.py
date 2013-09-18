@@ -63,42 +63,27 @@ class switch():
             else:
                 rmsg = of.ofp_header(data[0:8])
                 # Here, we can manipulate OpenFlow packets from CONTROLLER.
-                #rmsg.show()
                 if rmsg.type == 14:  #cflow_mod   #firstly,we split the packet.
                     header = ofc.ofp_header(data[0:8])
                     print "ofc_xid = ", header.xid
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
-                    actions = data[92:]# what do you do about the actions?  use for nothing?
+                    actions = data[92:]# No use!!
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
                     print "flow_mod_msg xid:", header.xid
-                    #data.show()
-                #if rmsg.type == 6: #OFPT_FEATURES_REPLY 
-                   # header = ofc.ofp_header(data[0:8])
-                   # print "ofc_xid = ", header.xid
-                   # cflow_mod = ofc.ofp_cflow_mod(data[8:16])
-                   # cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
-                   # cflow_connect = ofc.ofp_connect(data[18:92])
-                    #actions = data[92:]
-                    #msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect
-                    #data = convert.ofc2of(msg, self.buffer, self.dpid)
-                    #print "flow_mod_msg xid:", header.xid
-                    
+                  
                 #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                 self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
     
         if events & io_loop.WRITE:
-            #print "trying to send packet to controller" 
             try:
                 next_msg = self.queue_con.get_nowait()
             except Queue.Empty:
-                #print "%s queue empty" % str(address)
                 io_loop.update_handler(self.fd_con, io_loop.READ)
             else:
-                #print 'sending "%s" to %s' % (of.ofp_type[of.ofp_header(next_msg).type], self.sock_con.getpeername())
                 self.sock_con.send(next_msg)
 
     def switch_handler(self, address, fd, events):
@@ -112,44 +97,34 @@ class switch():
                 io_loop.remove_handler(self.fd_con)
             else:
                 rmsg = of.ofp_header(data[0:8])
-                #rmsg.show()
                 if rmsg.type == 6:
                     print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
-                    #print "rmsg.load:",len(body)/48
                     header = of.ofp_header(data[0:8]) 
                     print "ofp_features_reply.xid ", header.xid
-                    msg = of.ofp_features_reply(data[8:32])#length of reply msg      corretly!
+                    msg = of.ofp_features_reply(data[8:32])
                     msg_port = data[32:]
-                    #print len(msg_port)
-                    msg = header/msg/msg_port                      #we calculate the number of the ports in convert.
+                    msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id
-
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
-                    #self.dpid=msg.datapath_id
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                     self.queue_con.put(str(data))#put it into the queue of packet which need to send to controller.  
       
                 elif rmsg.type == 10:
-                    #print "Packet In"
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
-                    #pkt_in_msg.show()
                     pkt_parsed = of.Ether(data[18:])
-                    #pkt_parsed.show()
                     #[port + id] --> [buffer_id + pkt_in_msg]
                     self.counter+=1
                     if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                         if isinstance(pkt_parsed.payload.payload, of.ICMP):
                             self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
-                            #print "ping", self.buffer  
+                            
                         elif isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
                             self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
-                            #print "ping", self.buffer
+                            
                             
                     #change the xid in header, so that the agent can track the packet/buffer_id more precisely
                     rmsg.xid = self.counter
                     data = rmsg/pkt_in_msg/pkt_parsed
-                    #print "pkt_in_msg xid:", self.counter, pkt_in_msg.buffer_id
-                    #rmsg.show()
                 # Here, we can manipulate OpenFlow packets from SWITCH.
 
 
@@ -195,7 +170,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect((controllerIP,6634))#controller's IP, better change it into an argument
+        sock_control.connect((controllerIP,6634))
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
