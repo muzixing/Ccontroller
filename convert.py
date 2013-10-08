@@ -36,9 +36,13 @@ def of2ofc(msg, buffer, dpid):
             print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id
             port_raw=str(port_info)
             port_num = len(port_raw)/48  
+
+            phy_port = {}
+            phy_cport = {}
+            MyPort = {}
             #print port_num                                            #we need to know how many ports. 
 
-            sw = setting.creat_sw(0)          #datapath_id?
+            sw = setting.creat_sw(pkt_parsed.datapath_id)  #is that right?     
 
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
@@ -59,15 +63,10 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_TABLE_STATS = pkt_parsed.OFPC_TABLE_STATS,  #1<<1 Table statistics
                                                   OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,    #1<<0 Flow statistics
                                                   actions = pkt_parsed.actions)
-
-            phy_port = {}
-            phy_cport = {}
-            MyPort = {}
-
             for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
 
-                MyPort[i] = setting.creat_port(i)
+                MyPort[i] = setting.creat_port(i, pkt_parsed.datapath_id) 
 
                 phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,

@@ -642,7 +642,7 @@ if __name__ == '__main__':
     buffer = {}
     dpid = 8
 
-    e = of.ofp_header(type =6)/of.ofp_features_reply(datapath_id=2)/of.ofp_phy_port(port_no=1)/of.ofp_phy_port(port_no=2)\
+    e = of.ofp_header(type =6)/of.ofp_features_reply(datapath_id=1)/of.ofp_phy_port(port_no=1)/of.ofp_phy_port(port_no=2)\
                               /of.ofp_phy_port(port_no=3)/of.ofp_phy_port(port_no=4)/of.ofp_phy_port(port_no=5)
     f = convert.of2ofc(e, buffer, dpid)
     f.show()
