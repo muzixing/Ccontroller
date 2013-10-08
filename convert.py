@@ -36,14 +36,19 @@ def of2ofc(msg, buffer, dpid):
             print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id
             port_raw=str(port_info)
             port_num = len(port_raw)/48  
-            print port_num                                            #we need to know how many ports. 
+            #print port_num                                            #we need to know how many ports. 
+
+            sw = setting.creat_sw(0)          #datapath_id?
+
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
                                                   n_tables = pkt_parsed.n_tables,
                                                   n_cports = port_num,
                                                   #features
-                                                  OFPC_OTN_SWITCH = 1,    #1<<31  if it is a otn switch
-                                                  OFPC_WAVE_SWITCH = 0,   #1<<30
+
+                                                  OFPC_OTN_SWITCH = sw.type_otn,    #1<<31  if it is a otn switch
+                                                  OFPC_WAVE_SWITCH = sw.type_wave,   #1<<30
+
                                                   NOT_DEFINED = 0,
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
                                                   OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,  #1<<6 Queue statistics
@@ -57,9 +62,13 @@ def of2ofc(msg, buffer, dpid):
 
             phy_port = {}
             phy_cport = {}
+            MyPort = {}
+
             for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
-                sw[i] =creat_sw()
+
+                MyPort[i] = setting.creat_port(i)
+
                 phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,
                                                   port_name = phy_port[i].port_name,
@@ -81,28 +90,28 @@ def of2ofc(msg, buffer, dpid):
                                                   supported = 0,
                                                   peer = 0,
                                                   #expend for circuit switch ports.
-                                                  OFPST_FIBER = sw[i].OFPST_FIBER,   # 1<<15 can switch circuits based on SM/MM fiber
-                                                  OFPST_WAVE = sw[i].OFPST_WAVE,     # 1<<14 can switch circuits based on ITU-T lambdas
-                                                  OFPST_T_OTN = sw[i].OFPST_T_OTN,    # 1<<13 can switch circuits based on OTN standard
-                                                  OFPST_T_SDH = sw[i].OFPST_T_SDH,  # 1<<12 can switch circuits based on SDH standard
-                                                  OFPST_T_SONET = sw[i].OFPST_T_SONET,  # 1<<11 can switch circuits based on SONET standard
-                                                  NOT_DEFINED = sw[i].NOT_DEFINED,  # Not used
-                                                  OFPST_ETH = sw[i].OFPST_ETH,  # 1<<4 can switch packets based on ETH headers
-                                                  OFPST_VLAN = sw[i].OFPST_VLAN,  # 1<<3 can switch packets based on VLAN tags
-                                                  OFPST_MPLS = sw[i].OFPST_MPLS,  # 1<<2 can switch packets based on MPLS labels
-                                                  OFPST_IP = sw[i].OFPST_IP,  # 1<<1 can switch packets based on IP headers 
-                                                  OFPST_L4 = sw[i].OFPST_L4,  # 1<<0 can switch packets based on TCP/UDP headers
+                                                  OFPST_FIBER = MyPort[i].OFPST_FIBER,   # 1<<15 can switch circuits based on SM/MM fiber
+                                                  OFPST_WAVE = MyPort[i].OFPST_WAVE,     # 1<<14 can switch circuits based on ITU-T lambdas
+                                                  OFPST_T_OTN = MyPort[i].OFPST_T_OTN,   # 1<<13 can switch circuits based on OTN standard
+                                                  OFPST_T_SDH = MyPort[i].OFPST_T_SDH,  # 1<<12 can switch circuits based on SDH standard
+                                                  OFPST_T_SONET = MyPort[i].OFPST_T_SONET,  # 1<<11 can switch circuits based on SONET standard
+                                                  NOT_DEFINED = 0,  # Not used
+                                                  OFPST_ETH = MyPort[i].OFPST_ETH,  # 1<<4 can switch packets based on ETH headers
+                                                  OFPST_VLAN = MyPort[i].OFPST_VLAN,  # 1<<3 can switch packets based on VLAN tags
+                                                  OFPST_MPLS = MyPort[i].OFPST_MPLS,  # 1<<2 can switch packets based on MPLS labels
+                                                  OFPST_IP = MyPort[i].OFPST_IP,  # 1<<1 can switch packets based on IP headers 
+                                                  OFPST_L4 = MyPort[i].OFPST_L4,  # 1<<0 can switch packets based on TCP/UDP headers
 
                                                   SUPP_SW_GRAN = 0,  #use for defined something ,waiting a second.
                                                   sup_sdh_port_bandwidth = 0,
                                                   sup_otn_port_bandwidth = 0,
                                                   peer_port_no = 0,
                                                   peer_datapath_id = 0)\
-                                /ofc.sup_wave_port_bandwidth(center_freq_lmda = sw[i].center_freq_lmda,
-                                                             num_lmda = sw[i].num_lmda,
-                                                             freq_space_lmda = sw[i].freq_space_lmda
+                                /ofc.sup_wave_port_bandwidth(center_freq_lmda = MyPort[i].center_freq_lmda,
+                                                             num_lmda = MyPort[i].num_lmda,
+                                                             freq_space_lmda = MyPort[i].freq_space_lmda
                                                              )
-                print phy_cport[i].port_no,phy_port[i].port_no 
+                #print phy_cport[i].port_no,phy_port[i].port_no 
                 cfeatures_reply =cfeatures_reply/phy_cport[i]    
                 
             cfeatures_reply = ofc.ofp_header(type = 24, length =port_num*74+32,)/cfeatures_reply
