@@ -368,8 +368,8 @@ class ofp_features_reply(Packet):
     For presenting, just use ``BitFieldLenField``, parameters are name, default
     value, length(in bits) and something I don't know.
     """
-    fields_desc=[ BitFieldLenField('datapath_id', None, 64, length_of='varfield'),
-                  BitFieldLenField('n_buffers', None, 32, length_of='varfield'),
+    fields_desc=[ BitField('datapath_id', None, 64),
+                  BitField('n_buffers', None, 32),
                   XByteField("n_tables", 0),
                   X3BytesField("pad", 0),
                   #features
@@ -384,7 +384,7 @@ class ofp_features_reply(Packet):
                   BitField("OFPC_PORT_STATS", 0, 1),    #1<<2 Port statistics
                   BitField("OFPC_TABLE_STATS", 0, 1),   #1<<1 Table statistics
                   BitField("OFPC_FLOW_STATS", 0, 1),    #1<<0 Flow statistics
-                  BitFieldLenField('actions', None, 32, length_of='varfield'),
+                  BitField('actions', None, 32),
                   #port info can be resoved at TCP server
                 ]
 bind_layers( ofp_header, ofp_features_reply, type=6 )
@@ -401,8 +401,8 @@ class ofp_cfeatures_reply(Packet):
     For presenting, just use ``BitFieldLenField``, parameters are name, default
     value, length(in bits) and something I don't know.
     """
-    fields_desc=[ BitFieldLenField('datapath_id', None, 64, length_of='varfield'),
-                  BitFieldLenField('n_buffers', None, 32, length_of='varfield'),
+    fields_desc=[ BitField('datapath_id', None, 64),
+                  BitField('n_buffers', None, 32),
                   XByteField("n_tables", 0),
                   XByteField("n_cports", 0),#  there is some difference right here.
                   XByteField("pad2.0", 0),
@@ -419,7 +419,7 @@ class ofp_cfeatures_reply(Packet):
                   BitField("OFPC_PORT_STATS", 0, 1),    #1<<2 Port statistics
                   BitField("OFPC_TABLE_STATS", 0, 1),   #1<<1 Table statistics
                   BitField("OFPC_FLOW_STATS", 0, 1),    #1<<0 Flow statistics
-                  BitFieldLenField('actions', None, 32, length_of='varfield'),
+                  BitField('actions', None, 32),
                   #port info can be resoved at TCP server
                 ]
 #bind_layers(ofp_features_reply,ofp_phy_cport)#can we do it ?
@@ -646,6 +646,8 @@ if __name__ == '__main__':
                               /of.ofp_phy_port(port_no=3)/of.ofp_phy_port(port_no=4)/of.ofp_phy_port(port_no=5)
     f = convert.of2ofc(e, buffer, dpid)
     f.show()
+    p = str(f)
+
     #a.show()
     #a.show_sw_grain()
     
