@@ -24,7 +24,12 @@ class  MyPort():
 		self.OFPST_VLAN = f[sw_no][port_no][6]      
 		self.OFPST_MPLS = f[sw_no][port_no][7]      
 		self.OFPST_IP = f[sw_no][port_no][8]        
-		self.OFPST_L4 = f[sw_no][port_no][9]        
+		self.OFPST_L4 = f[sw_no][port_no][9]      
+		self.SUPP_SW_GRAN = f[sw_no][port_no][10]  
+		self.sup_sdh_port_bandwidth = f[sw_no][port_no][11]
+		self.sup_otn_port_bandwidth = f[sw_no][port_no][12]
+		self.peer_port_no = f[sw_no][port_no][13]
+		self.peer_datapath_id = f[sw_no][port_no][14]
 
 #________________wave sw________________________
 		self.center_freq_lmda = wave[sw_no][port_no][0]

@@ -176,14 +176,14 @@ def client_handler(address, fd, events):
             elif rmsg.type == 24:
                 print "OFPT_CFEATURES_REPLY"
                 #print "rmsg.load:",len(body)/48
-                msg = ofc.ofp_cfeatures_reply(body[0:24])#length of reply msg
+                msg = of.ofp_cfeatures_reply(body[0:24])#length of reply msg
                 sock_dpid[fd]=msg.datapath_id
                 #msg.show()
                 port_info_raw = body[24:]
                 port_info = {}
                 print "port number:",len(port_info_raw)/72, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/72):
-                    port_info[i] = ofc.ofp_phy_cport(port_info_raw[i*72:72+i*72])
+                    port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
 
                 #------------------------------------------------------We finish the actions of manipulateing___________________________
@@ -222,8 +222,8 @@ def new_sock(block):
 
 if __name__ == '__main__':
     sock = new_sock(0)
-    sock.bind(("localhost", 6634))
-    sock.listen(6634)
+    sock.bind(("localhost", 6640))
+    sock.listen(6640)
     
     io_loop = ioloop.IOLoop.instance()
     #callback = functools.partial(connection_ready, sock)

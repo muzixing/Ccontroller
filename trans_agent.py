@@ -69,7 +69,7 @@ class switch():
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
-                    actions = data[92:]# No use!!
+                    actions = data[92:]# No using,because it is empty!
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
                     print "flow_mod_msg xid:", header.xid
@@ -170,7 +170,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect((controllerIP,6634))
+        sock_control.connect((controllerIP,6638))
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
@@ -207,10 +207,10 @@ if __name__ == '__main__':
     in Tornado. And Tornado will execute the callback function ``agent()``.
     """
     sock = new_sock(0)
-    sock.bind(("", 6633))
+    sock.bind(("localhost", 6633))
     sock.listen(6633)
     num = 0
-    controllerIP = "192.168.0.3"
+    controllerIP = 'localhost'
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()

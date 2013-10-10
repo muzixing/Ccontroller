@@ -42,7 +42,7 @@ def of2ofc(msg, buffer, dpid):
             MyPort = {}
             #print port_num                                            #we need to know how many ports. 
 
-            sw = setting.creat_sw(pkt_parsed.datapath_id)  #is that right?     
+            sw = setting.creat_sw(1)  #is that right?     
 
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
@@ -53,7 +53,7 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_OTN_SWITCH = sw.type_otn,    #1<<31  if it is a otn switch
                                                   OFPC_WAVE_SWITCH = sw.type_wave,   #1<<30
 
-                                                  NOT_DEFINED = 0,
+                                                  #NOT_DEFINED = "0000000000000000000000",
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
                                                   OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,  #1<<6 Queue statistics
                                                   OFPC_IP_STREAM = pkt_parsed.OFPC_IP_STREAM,     #1<<5 Can reassemble IP fragments
@@ -66,7 +66,7 @@ def of2ofc(msg, buffer, dpid):
             for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
 
-                MyPort[i] = setting.creat_port(i, pkt_parsed.datapath_id) 
+                MyPort[i] = setting.creat_port(i, 1) 
 
                 phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,
@@ -81,7 +81,7 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPPC_NO_STP = phy_port[i].OFPPC_NO_STP,
                                                   OFPPC_PORT_DOWN =phy_port[i].OFPPC_PORT_DOWN,
                                                   #state 
-                                                  not_defined_state = 0,
+                                                  #not_defined_state = 0,
                                                   OFPPS_LINK_DOWN = 0,
                                                   #curr=not defined
                                                   curr = 0,
@@ -94,18 +94,18 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPST_T_OTN = MyPort[i].OFPST_T_OTN,   # 1<<13 can switch circuits based on OTN standard
                                                   OFPST_T_SDH = MyPort[i].OFPST_T_SDH,  # 1<<12 can switch circuits based on SDH standard
                                                   OFPST_T_SONET = MyPort[i].OFPST_T_SONET,  # 1<<11 can switch circuits based on SONET standard
-                                                  NOT_DEFINED = 0,  # Not used
+                                                  #NOT_DEFINED = 0,  # Not used
                                                   OFPST_ETH = MyPort[i].OFPST_ETH,  # 1<<4 can switch packets based on ETH headers
                                                   OFPST_VLAN = MyPort[i].OFPST_VLAN,  # 1<<3 can switch packets based on VLAN tags
                                                   OFPST_MPLS = MyPort[i].OFPST_MPLS,  # 1<<2 can switch packets based on MPLS labels
                                                   OFPST_IP = MyPort[i].OFPST_IP,  # 1<<1 can switch packets based on IP headers 
                                                   OFPST_L4 = MyPort[i].OFPST_L4,  # 1<<0 can switch packets based on TCP/UDP headers
 
-                                                  SUPP_SW_GRAN = 0,  #use for defined something ,waiting a second.
-                                                  sup_sdh_port_bandwidth = 0,
-                                                  sup_otn_port_bandwidth = 0,
-                                                  peer_port_no = 0,
-                                                  peer_datapath_id = 0)\
+                                                  SUPP_SW_GRAN = MyPort[i].SUPP_SW_GRAN,         #use for defined something ,waiting a second.
+                                                  sup_sdh_port_bandwidth = MyPort[i].sup_sdh_port_bandwidth,
+                                                  sup_otn_port_bandwidth = MyPort[i].sup_otn_port_bandwidth,
+                                                  peer_port_no = MyPort[i].peer_port_no,
+                                                  peer_datapath_id = MyPort[i].peer_datapath_id)\
                                 /ofc.sup_wave_port_bandwidth(center_freq_lmda = MyPort[i].center_freq_lmda,
                                                              num_lmda = MyPort[i].num_lmda,
                                                              freq_space_lmda = MyPort[i].freq_space_lmda
