@@ -170,7 +170,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect((controllerIP,6638))
+        sock_control.connect((controllerIP,6634))
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
@@ -207,10 +207,10 @@ if __name__ == '__main__':
     in Tornado. And Tornado will execute the callback function ``agent()``.
     """
     sock = new_sock(0)
-    sock.bind(("localhost", 6633))
+    sock.bind(("", 6633))
     sock.listen(6633)
     num = 0
-    controllerIP = 'localhost'
+    controllerIP = "192.168.0.3"
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()

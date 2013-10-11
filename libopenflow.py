@@ -415,7 +415,7 @@ class ofp_flow_stats_data(Packet):
 3    none    "OFPT_ECHO_REPLY",
 4            "OFPT_VENDOR",
 5    okay    "OFPT_FEATURES_REQUEST",
-6            "OFPT_FEATURES_REPLY",
+6    okay    "OFPT_FEATURES_REPLY",
 7            "OFPT_GET_CONFIG_REQUEST",
 8            "OFPT_GET_CONFIG_REPLY",
 9            "OFPT_SET_CONFIG",

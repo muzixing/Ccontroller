@@ -133,7 +133,7 @@ def ofc2of(msg, buffer, dpid):
             # [port + id] --> [buffer_id + pkt_in_msg]  
             buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = pkt.payload.payload
+            pkt_parsed = pkt.payload.payload  #pkt is a Ethernet packet.
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                     if isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
                         flow_mod_msg = of.ofp_header(type=14,

@@ -49,7 +49,8 @@ def client_handler(address, fd, events):
                 rmsg = of.ofp_header(data)
             if rmsg.type == 0:
                 print "OFPT_HELLO"
-                msg = of.ofp_header(type = 5)
+                msg = of.ofp_header(type = 5)    #we send the features_request here.
+                print "OFPT_FEATURES_REQUEST"
                 io_loop.update_handler(fd, io_loop.WRITE)
                 message_queue_map[sock].put(data)
                 message_queue_map[sock].put(str(msg))
@@ -78,13 +79,19 @@ def client_handler(address, fd, events):
                 
                 message_queue_map[sock].put(str(msg))
                 io_loop.update_handler(fd, io_loop.WRITE)
-                
+            elif rmsg.type == 3:
+                print "OFPT_ECHO_REPLY"
+            elif rmsg.type == 4:
+                print "OFPT_VENDOR" #USE FOR WHAT?
+            elif rmsg.type == 5:
+                print "OFPT_FEATURES_REQUEST"
             elif rmsg.type == 10:
                 #print "OFPT_PACKET_IN"
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
                 dpid = sock_dpid[fd]
+                cflow_mod_flag =0
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -116,10 +123,16 @@ def client_handler(address, fd, events):
                             cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
                             cflow_mod.payload.payload.payload.wport_out = 0xfffb
                             cflow_mod.payload.payload.payload.num_wave_out = grain
-                    
-                        message_queue_map[sock].put(str(cflow_mod))
-                        io_loop.update_handler(fd, io_loop.WRITE)
 
+                        message_queue_map[sock].put(str(cflow_mod))
+                        cflow_mod_flag =1
+                        io_loop.update_handler(fd, io_loop.WRITE)
+            elif cflow_mod_flag:
+                print "cflow_mod_flag =1,so we send a OFPT_BARRIER_REQUEST packet"
+                msg = of.ofp_header(type = 18,xid = rmsg.xid) 
+                message_queue_map[sock].put(str(msg))
+                cflow_mod_flag = 0  
+                io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 11: 
                 print "OFPT_FLOW_REMOVED"
             elif rmsg.type == 12:
@@ -222,8 +235,8 @@ def new_sock(block):
 
 if __name__ == '__main__':
     sock = new_sock(0)
-    sock.bind(("localhost", 6640))
-    sock.listen(6640)
+    sock.bind(("", 6634))
+    sock.listen(6634)
     
     io_loop = ioloop.IOLoop.instance()
     #callback = functools.partial(connection_ready, sock)
