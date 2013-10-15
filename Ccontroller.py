@@ -85,13 +85,14 @@ def client_handler(address, fd, events):
                 print "OFPT_VENDOR" #USE FOR WHAT?
             elif rmsg.type == 5:
                 print "OFPT_FEATURES_REQUEST"
+
             elif rmsg.type == 10:
                 #print "OFPT_PACKET_IN"
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
                 dpid = sock_dpid[fd]
-                cflow_mod_flag =0
+                
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -125,13 +126,10 @@ def client_handler(address, fd, events):
                             cflow_mod.payload.payload.payload.num_wave_out = grain
 
                         message_queue_map[sock].put(str(cflow_mod))
-                        cflow_mod_flag =1
                         io_loop.update_handler(fd, io_loop.WRITE)
-            elif cflow_mod_flag:
-                print "cflow_mod_flag =1,so we send a OFPT_BARRIER_REQUEST packet"
+                print "OFPT_BARRIER_REQUEST"
                 msg = of.ofp_header(type = 18,xid = rmsg.xid) 
                 message_queue_map[sock].put(str(msg))
-                cflow_mod_flag = 0  
                 io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 11: 
                 print "OFPT_FLOW_REMOVED"
@@ -182,6 +180,9 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
+                msg = ofp_header(type = 16)                                             #we still need to finish this packet.
+                message_queue_map[sock].put(str(msg))
+                io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"
             elif rmsg.type == 21:

@@ -115,11 +115,11 @@ class switch():
                     #[port + id] --> [buffer_id + pkt_in_msg]
                     self.counter+=1
                     if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                        if isinstance(pkt_parsed.payload.payload, of.ICMP):
-                            self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
+                        #if isinstance(pkt_parsed.payload.payload, of.ICMP):
+                            #self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
                             
-                        elif isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
-                            self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
+                        #elif isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
+                        self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
                             
                             
                     #change the xid in header, so that the agent can track the packet/buffer_id more precisely
