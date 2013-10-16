@@ -142,7 +142,7 @@ def client_handler(address, fd, events):
             elif rmsg.type == 15:
                 print "OFPT_PORT_MOD"
             elif rmsg.type == 16:
-                print "OFPT_STATS_REQUEST"
+                print "OFPT_STATS_REQUE ST"
                 
             elif rmsg.type == 17:
                 print "OFPT_STATS_REPLY"
@@ -180,8 +180,10 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                msg = ofp_header(type = 16)                                             #we still need to finish this packet.
+                #full message for flow status request: ofp_status_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_status_request()
+                msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_status_request()#ALL BY DEFAULT!
                 message_queue_map[sock].put(str(msg))
+                print "OFPT_STATS_REQUEST"
                 io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"
