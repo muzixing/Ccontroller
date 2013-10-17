@@ -133,7 +133,7 @@ def ofc2of(msg, buffer, dpid):
             # [port + id] --> [buffer_id + pkt_in_msg]  
             buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = pkt.payload.payload  #pkt_parsed is a Ethernet packet.
+            pkt_parsed = pkt.payload.payload                                                    #######   pkt_parsed is a Ethernet packet.
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                     if isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
                         flow_mod_msg = of.ofp_header(type=14,
@@ -232,8 +232,8 @@ def ofc2of(msg, buffer, dpid):
                                                      nw_proto=pkt_parsed.payload.proto,
                                                      nw_src=pkt_parsed.payload.src,
                                                      nw_dst=pkt_parsed.payload.dst,
-                                                     tp_src = pkt_parsed.payload.payload.tp_src,
-                                                     tp_dst = pkt_parsed.payload.payload.tp_dst)\
+                                                     tp_src = pkt_parsed.payload.payload.sport,
+                                                     tp_dst = pkt_parsed.payload.payload.dport)\
                                        /of.ofp_flow_mod(cookie=0,
                                                         command=0,
                                                         idle_timeout=10,
@@ -257,8 +257,8 @@ def ofc2of(msg, buffer, dpid):
                                                      nw_proto=pkt_parsed.payload.proto,
                                                      nw_src=pkt_parsed.payload.src,
                                                      nw_dst=pkt_parsed.payload.dst,
-                                                     tp_src = pkt_parsed.payload.payload.tp_src,
-                                                     tp_dst = pkt_parsed.payload.payload.tp_dst)\
+                                                     tp_src = pkt_parsed.payload.payload.sport,
+                                                     tp_dst = pkt_parsed.payload.payload.dport)\
                                        /of.ofp_flow_mod(cookie=0,
                                                         command=0,
                                                         idle_timeout=10,
