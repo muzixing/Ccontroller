@@ -484,11 +484,11 @@ class ofp_flow_mod(Packet):
                 ]
     
 # No. 16 
-#full message for flow status request: ofp_status_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_status_request()
+#full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
 class ofp_stats_request(Packet):
     name = "OpenFlow Stats Request"
     fields_desc=[ ShortEnumField("type", 0, ofp_stats_types),
-                  ShortField("flag", 0)]#body follow this
+                  ShortField("flag", 0)]     #body follow this
 
 #body of ofp_status_request
 #need to add a match field before this pkt
@@ -607,7 +607,7 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 3    none    "OFPT_ECHO_REPLY",
 4            "OFPT_VENDOR",
 5    okay    "OFPT_FEATURES_REQUEST",
-6            "OFPT_FEATURES_REPLY",
+6     OK     "OFPT_FEATURES_REPLY",
 7            "OFPT_GET_CONFIG_REQUEST",
 8            "OFPT_GET_CONFIG_REPLY",
 9            "OFPT_SET_CONFIG",
@@ -619,8 +619,8 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 15           "OFPT_PORT_MOD",
 16           "OFPT_STATS_REQUEST",
 17           "OFPT_STATS_REPLY",
-18           "OFPT_BARRIER_REQUEST",
-19           "OFPT_BARRIER_REPLY",
+18   ok      "OFPT_BARRIER_REQUEST",
+19   ok      "OFPT_BARRIER_REPLY",
 20           "OFPT_QUEUE_GET_CONFIG_REQUEST",
 21           "OFPT_QUEUE_GET_CONFIG_REPLY"
 """

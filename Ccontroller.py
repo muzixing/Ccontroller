@@ -106,7 +106,7 @@ def client_handler(address, fd, events):
                     io_loop.update_handler(fd, io_loop.WRITE)
                     message_queue_map[sock].put(str(pkt_out_))
                 if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                    if isinstance(pkt_parsed.payload.payload.payload, of.ICMP) or isinstance(pkt_parsed.payload.payload, of.ICMP):
+                    if isinstance(pkt_parsed.payload.payload.payload, of.ICMP) or isinstance(pkt_parsed.payload.payload, of.ICMP) or 1: #all IP packets.
                         cflow_mod = of.ofp_header(type=14, xid=rmsg.xid)\
                                     /of.ofp_cflow_mod(command=0)\
                                     /of.ofp_connect_wildcards()\
@@ -181,7 +181,21 @@ def client_handler(address, fd, events):
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
                 #full message for flow status request: ofp_status_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_status_request()
-                msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_status_request()#ALL BY DEFAULT!
+                msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)\
+                                            /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                                                              OFPFW_DL_VLAN_PCP=1,
+                                                              OFPFW_NW_DST_MASK=1,
+                                                              OFPFW_NW_SRC_MASK=1,
+                                                              OFPFW_TP_DST=1,
+                                                              OFPFW_TP_SRC=1,
+                                                              OFPFW_NW_PROTO=1,
+                                                              OFPFW_DL_TYPE=1,
+                                                              OFPFW_DL_VLAN=0,
+                                                              OFPFW_IN_PORT=0,
+                                                              OFPFW_DL_DST=0,
+                                                              OFPFW_DL_SRC=0)\
+                                            /of.ofp_match()\
+                                            /of.ofp_flow_stats_request()#ALL BY DEFAULT!
                 message_queue_map[sock].put(str(msg))
                 print "OFPT_STATS_REQUEST"
                 io_loop.update_handler(fd, io_loop.WRITE)
