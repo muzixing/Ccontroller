@@ -196,9 +196,9 @@ def client_handler(address, fd, events):
                                                               OFPFW_DL_SRC=0)\
                                             /of.ofp_match()\
                                             /of.ofp_flow_stats_request()#ALL BY DEFAULT!
-                message_queue_map[sock].put(str(msg))
-                print "OFPT_STATS_REQUEST"
-                io_loop.update_handler(fd, io_loop.WRITE)
+                #message_queue_map[sock].put(str(msg))
+                #print "OFPT_STATS_REQUEST"
+                #io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"
             elif rmsg.type == 21:
