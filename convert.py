@@ -159,8 +159,8 @@ def ofc2of(msg, buffer, dpid):
                                                      nw_proto=pkt_parsed.payload.proto,
                                                      nw_src=pkt_parsed.payload.src,
                                                      nw_dst=pkt_parsed.payload.dst,
-                                                     tp_src = pkt_parsed.payload.payload.type,
-                                                     tp_dst = pkt_parsed.payload.payload.code)\
+                                                     tp_src = 0,
+                                                     tp_dst = 0)\
                                        /of.ofp_flow_mod(cookie=0,
                                                         command=0,
                                                         idle_timeout=10,
@@ -187,8 +187,8 @@ def ofc2of(msg, buffer, dpid):
                                                      nw_proto=pkt_parsed.payload.proto,
                                                      nw_src=pkt_parsed.payload.src,
                                                      nw_dst=pkt_parsed.payload.dst,
-                                                     tp_src = pkt_parsed.payload.payload.type,   #why is the type and code? 
-                                                     tp_dst = pkt_parsed.payload.payload.code)\
+                                                     tp_src = 0,   
+                                                     tp_dst = 0)\
                                        /of.ofp_flow_mod(cookie=0,
                                                         command=0,
                                                         idle_timeout=10,
