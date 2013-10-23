@@ -142,7 +142,7 @@ def client_handler(address, fd, events):
             elif rmsg.type == 15:
                 print "OFPT_PORT_MOD"
             elif rmsg.type == 16:
-                print "OFPT_STATS_REQUE ST"
+                print "OFPT_STATS_REQUEST"
                 
             elif rmsg.type == 17:
                 print "OFPT_STATS_REPLY"
@@ -180,25 +180,14 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                #full message for flow status request: ofp_status_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_status_request()
+                #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
                 msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)\
-                                            /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
-                                                              OFPFW_DL_VLAN_PCP=1,
-                                                              OFPFW_NW_DST_MASK=1,
-                                                              OFPFW_NW_SRC_MASK=1,
-                                                              OFPFW_TP_DST=1,
-                                                              OFPFW_TP_SRC=1,
-                                                              OFPFW_NW_PROTO=1,
-                                                              OFPFW_DL_TYPE=1,
-                                                              OFPFW_DL_VLAN=0,
-                                                              OFPFW_IN_PORT=0,
-                                                              OFPFW_DL_DST=0,
-                                                              OFPFW_DL_SRC=0)\
-                                            /of.ofp_match()\
-                                            /of.ofp_flow_stats_request()#ALL BY DEFAULT!
-                #message_queue_map[sock].put(str(msg))
-                #print "OFPT_STATS_REQUEST"
-                #io_loop.update_handler(fd, io_loop.WRITE)
+                                            /of.ofp_flow_wildcards()\
+                                            /of.ofp_match(in_port = 1)\
+                                            /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
+                message_queue_map[sock].put(str(msg))
+                print "OFPT_STATS_REQUEST"
+                io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"
             elif rmsg.type == 21:

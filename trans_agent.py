@@ -50,6 +50,7 @@ class switch():
         self.buffer     = {}
         self.counter    = 0
         self.dpid       = 0
+        self.flow_cache = {}#use for save the flow
         
     def controller_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -69,11 +70,25 @@ class switch():
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
-                    actions = data[92:]# No using,because it is empty!
+                    actions = data[92:]         # No using,because it is empty!
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
+                    self.flow_cache[data.payload.payload.in_port] = data #save the flow based on in_port
                     print "flow_mod_msg xid:", header.xid
-                  
+
+                #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
+                elif rmsg.type == 16:
+                    header = ofc.ofp_header(data[0:8])
+                    ofp_stats_request = ofc.ofp_stats_request(data[8:12])
+                    ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[40:])
+                    data_match = ofc.ofp_match(data[16:40])
+                    flow =  self.flow_cache[data_match.in_port]
+
+                    ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
+                    ofp_flow_match = ofc.ofp_match(flow[12:36])
+
+                    data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
+
                 #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                 self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
@@ -105,6 +120,8 @@ class switch():
                     msg_port = data[32:]
                     msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id
+                    #check the switch type
+
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                     self.queue_con.put(str(data))#put it into the queue of packet which need to send to controller.  
@@ -115,13 +132,7 @@ class switch():
                     #[port + id] --> [buffer_id + pkt_in_msg]
                     self.counter+=1
                     if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                        #if isinstance(pkt_parsed.payload.payload, of.ICMP):
-                            #self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
-                            
-                        #elif isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
                         self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
-                            
-                            
                     #change the xid in header, so that the agent can track the packet/buffer_id more precisely
                     rmsg.xid = self.counter
                     data = rmsg/pkt_in_msg/pkt_parsed

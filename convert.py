@@ -11,6 +11,7 @@ import setting
 #_________________________________________________________of2ofc() uses for coverting the of packets to ofc's________________________________________
 
 
+
 def of2ofc(msg, buffer, dpid):
     print "of->ofc converting"
     if isinstance(msg, of.ofp_header):#it is a of packet.
@@ -53,7 +54,6 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_OTN_SWITCH = sw.type_otn,    #1<<31  if it is a otn switch
                                                   OFPC_WAVE_SWITCH = sw.type_wave,   #1<<30
 
-                                                  #NOT_DEFINED = "0000000000000000000000",
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
                                                   OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,  #1<<6 Queue statistics
                                                   OFPC_IP_STREAM = pkt_parsed.OFPC_IP_STREAM,     #1<<5 Can reassemble IP fragments
@@ -81,9 +81,9 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPPC_NO_STP = phy_port[i].OFPPC_NO_STP,
                                                   OFPPC_PORT_DOWN =phy_port[i].OFPPC_PORT_DOWN,
                                                   #state 
-                                                  #not_defined_state = 0,
+                                                  
                                                   OFPPS_LINK_DOWN = 0,
-                                                  #curr=not defined
+                                                  
                                                   curr = 0,
                                                   advertised = 0,
                                                   supported = 0,
@@ -133,7 +133,9 @@ def ofc2of(msg, buffer, dpid):
             # [port + id] --> [buffer_id + pkt_in_msg]  
             buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            pkt_parsed = pkt.payload.payload                                                    #######   pkt_parsed is a Ethernet packet.
+            
+            #######   pkt_parsed is a Ethernet packet
+            pkt_parsed = pkt.payload.payload                                                           .
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                     if isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
                         flow_mod_msg = of.ofp_header(type=14,
