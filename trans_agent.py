@@ -50,7 +50,7 @@ class switch():
         self.buffer     = {}
         self.counter    = 0
         self.dpid       = 0
-        self.flow_cache = {}#use for save the flow
+        self.flow_cache = []#use for save the flow
         
     def controller_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -73,7 +73,7 @@ class switch():
                     actions = data[92:]         # No using,because it is empty!
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
-                    self.flow_cache[data.payload.payload.in_port] = data #save the flow based on in_port
+                    self.flow_cache.append(data) 
                     print "flow_mod_msg xid:", header.xid
 
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
@@ -82,7 +82,7 @@ class switch():
                     ofp_stats_request = ofc.ofp_stats_request(data[8:12])
                     ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[40:])
                     data_match = ofc.ofp_match(data[16:40])
-                    flow =  self.flow_cache[data_match.in_port]
+                    flow =  str(self.flow_cache[data_match.in_port])
 
                     ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                     ofp_flow_match = ofc.ofp_match(flow[12:36])
