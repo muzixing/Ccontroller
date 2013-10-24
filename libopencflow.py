@@ -320,7 +320,7 @@ class ofp_match(Packet):
                   ShortField("tp_src", 0),      #TCP/UDP source port
                   ShortField("tp_dst", 0),      #TCP/UDP destination port
                 ]
-
+#THE SIZE OF MATCH IS 40 BYTES
 ###################
 # OpenFlow Header #
 ###################
