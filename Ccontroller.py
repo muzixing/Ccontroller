@@ -35,7 +35,7 @@ def handle_connection(connection, address):
 def client_handler(address, fd, events):
     sock = fd_map[fd]
     if events & io_loop.READ:
-        data = sock.recv(1024)
+        data = sock.recv(2048)
         if data == '':
             print "connection dropped"
             io_loop.remove_handler(fd)
@@ -148,31 +148,31 @@ def client_handler(address, fd, events):
                 print "OFPT_STATS_REPLY"
                 # 1. parsing ofp_stats_reply
                 reply_header = of.ofp_stats_reply(body[:4])
-                
                 # 2.parsing ofp_flow_stats msg
-                reply_body_data1 = of.ofp_flow_stats(body[4:8])
-                # match field in ofp_flow_stats
-                reply_body_wildcards = of.ofp_flow_wildcards(body[8:12])
-                reply_body_match = of.ofp_match(body[12:48])
-                # second part in ofp_flow_stats
-                reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
-                
-                # 3.parsing actions
-                # should first judge action type 
-                i = 0
-                reply_body_action = []
-                while i<len(body[92:]):
-                    if body[95+i:96+i]==0x08:
-                        print "0x08"
-                    i+=8
-                    if body[95+i:96+i] == 0x08:
-                        reply_body_action.append(of.ofp_action_output(body[92+i:100+i]))
-                        #i+=8
-                # 4.show msg
-                msg = reply_header/reply_body_data1/reply_body_wildcards/reply_body_match/reply_body_data2
-                msg.show()
-                print reply_body_action
-            
+                if reply_header.type == 1:
+                    reply_body_data1 = of.ofp_flow_stats(body[4:8])
+                    # match field in ofp_flow_stats
+                    reply_body_wildcards = of.ofp_flow_wildcards(body[8:12])
+                    reply_body_match = of.ofp_match(body[12:48])
+                    # second part in ofp_flow_stats
+                    reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
+                    # 3.parsing actions
+                    # should first judge action type 
+                    i = 0
+                    reply_body_action = []
+                    while i<len(body[92:]):
+                        if body[95+i:96+i]==0x08:
+                            print "0x08"
+                            i+=8
+                        if body[95+i:96+i] == 0x08:
+                            reply_body_action.append(of.ofp_action_output(body[92+i:100+i]))
+                            #i+=8
+                    # 4.show msg
+                    msg = reply_header/reply_body_data1/reply_body_wildcards/reply_body_match/reply_body_data2
+                    msg.show()
+                    print reply_body_action
+                elif reply_header.type == 0:
+                    print reply_header.payload
             # no message body
             elif rmsg.type == 18:
                 print "OFPT_BARRIER_REQUEST"
@@ -180,11 +180,12 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
+                msg = of.ofp_header(type = 16)/of.ofp_stats_rqeuest(type = 0)
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
-                msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)\
-                                            /of.ofp_flow_wildcards()\
-                                            /of.ofp_match(in_port = 1)\
-                                            /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
+                #msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)\
+                #                           /of.ofp_flow_wildcards()\
+                #                            /of.ofp_match(in_port = 1)\
+                #                           /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
                 message_queue_map[sock].put(str(msg))
                 print "OFPT_STATS_REQUEST"
                 io_loop.update_handler(fd, io_loop.WRITE)

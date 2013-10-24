@@ -80,17 +80,17 @@ class switch():
                 elif rmsg.type == 16:
                     header = ofc.ofp_header(data[0:8])
                     ofp_stats_request = ofc.ofp_stats_request(data[8:12])
-                    ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
-                    data_match = ofc.ofp_match(data[16:52])
-                    ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
-                    
-                    flow =  str(self.flow_cache)
+                    if ofp_stats_rqeuest.type == 1:
+                        ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
+                        data_match = ofc.ofp_match(data[16:52])
+                        ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
+                        flow =  str(self.flow_cache)
+                        ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
+                        ofp_flow_match = ofc.ofp_match(flow[12:48])
 
-                    ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
-                    ofp_flow_match = ofc.ofp_match(flow[12:48])
-
-                    data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request(table_id = 0xff, out_port = OFPP_NONE)
-
+                        data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request(table_id = 0xff, out_port = OFPP_NONE)
+                    elif ofp_stats_rqeuest.type == 0:
+                        print "send the ofp_stats_request(type = 0)"
                 #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                 self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
@@ -105,7 +105,7 @@ class switch():
 
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
-            data = self.sock_sw.recv(1024)
+            data = self.sock_sw.recv(2048)
             if data == '':
                 print "switch disconnected"
                 io_loop.remove_handler(self.fd_sw)
