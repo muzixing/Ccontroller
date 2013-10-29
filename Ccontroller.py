@@ -180,12 +180,12 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                msg = of.ofp_header(type = 16)/of.ofp_stats_rqeuest(type = 0)
+                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
-                #msg = of.ofp_header(type = 16)/of.ofp_stats_request(type =1)\
-                #                           /of.ofp_flow_wildcards()\
-                #                            /of.ofp_match(in_port = 1)\
-                #                           /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
+                msg = of.ofp_header(type = 16, length = 56)/of.ofp_stats_request(type =1)\
+                                           /of.ofp_flow_wildcards()\
+                                            /of.ofp_match(in_port = 1)\
+                                           /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
                 message_queue_map[sock].put(str(msg))
                 print "OFPT_STATS_REQUEST"
                 io_loop.update_handler(fd, io_loop.WRITE)

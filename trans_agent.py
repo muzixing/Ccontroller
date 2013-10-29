@@ -80,7 +80,7 @@ class switch():
                 elif rmsg.type == 16:
                     header = ofc.ofp_header(data[0:8])
                     ofp_stats_request = ofc.ofp_stats_request(data[8:12])
-                    if ofp_stats_rqeuest.type == 1:
+                    if ofp_stats_request.type == 1:
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
@@ -88,8 +88,8 @@ class switch():
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                         ofp_flow_match = ofc.ofp_match(flow[12:48])
 
-                        data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request(table_id = 0xff, out_port = OFPP_NONE)
-                    elif ofp_stats_rqeuest.type == 0:
+                        data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
+                    elif ofp_stats_request.type == 0:
                         print "send the ofp_stats_request(type = 0)"
                 #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
