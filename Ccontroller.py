@@ -35,7 +35,7 @@ def handle_connection(connection, address):
 def client_handler(address, fd, events):
     sock = fd_map[fd]
     if events & io_loop.READ:
-        data = sock.recv(1024)
+        data = sock.recv(16384)
         if data == '':
             print "connection dropped"
             io_loop.remove_handler(fd)
@@ -184,13 +184,12 @@ def client_handler(address, fd, events):
                     length = rmsg.length - 12
                     num = length/64
                     for i in xrange(num):
-                        table_body = body[4+i*64:]
+                        table_body = body[4+i*64:i*64+68]
                         reply_table_stats = of.ofp_table_stats(table_body[:36])
                         table_wildcards = of.ofp_flow_wildcards(table_body[36:40])
                         reply_table_stats_data = of.ofp_table_stats_data(table_body[40:64])
-                        table = reply_table_stats/table_wildcards/reply_table_stats_data
-                        msg = reply_header/table
-                    msg = rmsg/msg
+                        msg_tmp = reply_header/reply_table_stats/table_wildcards/reply_table_stats_data
+                    msg = rmsg/msg_tmp
                     msg.show()#this is the reply of table_stats
                 elif reply_header.type == 4:
                     #port stats reply
@@ -199,19 +198,20 @@ def client_handler(address, fd, events):
                     for i in xrange(num):
                         offset = 4+i*104
                         reply_port_stats = of.ofp_port_stats_reply(body[offset:(offset+104)])
-                        msg = reply_header/reply_port_stats
-                    msg = rmsg/msg
+                        msg_tmp = reply_header/reply_port_stats
+                    msg = rmsg/msg_tmp
                     msg.show()
                 elif reply_header.type == 5:
                     #queue reply
                     length = rmsg.length - 12
                     num = length/32
-                    for i in xrange(num):
-                        offset = 4+i*32
-                        queue_reply = of.ofp_queue_stats(body[offset:offset+32])
-                        msg = reply_header/queue_reply
-                    msg =rmsg/msg
-                    msg.show()
+                    if num:                          #if the queue is empty ,you need to check it !
+                        for i in xrange(num):
+                            offset = 4+i*32
+                            queue_reply = of.ofp_queue_stats(body[offset:offset+32])
+                            msg_tmp = reply_header/queue_reply
+                        msg = rmsg/msg_tmp
+                        msg.show()
                 elif reply_header.type == 0xffff:
                     #vendor reply
                     msg = rmsg/reply_header/of.ofp_vendor(body[4:])
@@ -222,7 +222,7 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)             #Type of  OFPST_DESC (0)
+                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)             #Type of  OFPST_DESC (0)
                 #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 3)             #Type of  OFPST_TABLE (0)
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()      Type of flow stats.(1)
                 #msg = of.ofp_header(type = 16, length = 56)/of.ofp_stats_request(type =1)\
@@ -234,12 +234,9 @@ def client_handler(address, fd, events):
                 #                    /of.ofp_flow_wildcards()/of.ofp_match()\
                 #                    /of.ofp_aggregate_stats_request()                                   # aggregate stats request
 
-                #msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type =5)/of.ofp_queue_stats_request()
+                msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type =5)/of.ofp_queue_stats_request()
                 #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0xffff)  #vendor request
                 message_queue_map[sock].put(str(msg))
-                print "OFPT_STATS_REQUEST type = 1"
-
-
                 io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"

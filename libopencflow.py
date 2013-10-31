@@ -521,8 +521,8 @@ class ofp_table_stats(Packet):
 
 class ofp_table_stats_data(Packet):
     name = "OpenFlow Table Stats data"
-    fields_desc=[ IntField("max_entries", 0),
-                  IntField("active_count", 0),
+    fields_desc=[ BitField("max_entries", 0, 32),
+                  BitField("active_count", 0, 32),
                   BitField("lookup_count", 0, 64),
                   BitField("matched_count", 0, 64)
                 ]
@@ -565,7 +565,7 @@ class ofp_aggregate_stats_reply(Packet):
   ]
 #sizeof(aggregate_stats_reply) =24
 
-class ofp_port_stats_rqeuest(Packet):
+class ofp_port_stats_request(Packet):
   name = "Openflow port stats request"
   fields_desc=[ ShortField("port_no", 0xffff),
                 X3BytesField("pad", 0),

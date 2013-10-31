@@ -123,7 +123,7 @@ class switch():
 
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
-            data = self.sock_sw.recv(2048)
+            data = self.sock_sw.recv(16384)
             if data == '':
                 print "switch disconnected"
                 io_loop.remove_handler(self.fd_sw)
