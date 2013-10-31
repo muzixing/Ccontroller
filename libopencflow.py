@@ -550,9 +550,9 @@ class ofp_desc_stats(Packet):
 #there is match before aggregate_stats_request
 class ofp_aggregate_stats_request(Packet):
   name = "OpenFlow aggregate_stats_request"
-  fields_desc=[ BitField("table_id", 0, 8),
+  fields_desc=[ ByteField("table_id", 0xff),
                 ByteField("pad", 0),
-                ShortField("out_port", 0)
+                ShortField("out_port", 0xffff)
               ]
     
 class ofp_aggregate_stats_reply(Packet):
@@ -567,7 +567,7 @@ class ofp_aggregate_stats_reply(Packet):
 
 class ofp_port_stats_rqeuest(Packet):
   name = "Openflow port stats request"
-  fields_desc=[ ShortField("port_no", 0),
+  fields_desc=[ ShortField("port_no", 0xffff),
                 X3BytesField("pad", 0),
                 X3BytesField("pad", 0)
               ]
@@ -594,7 +594,7 @@ class ofp_port_stats_reply(Packet):
 #sizeof(ofp_port_stats_reply)=104
 class ofp_queue_stats_request(Packet):
   name = "Openflow queue stats request"
-  fields_desc=[ ShortField("port_no", 0),
+  fields_desc=[ ShortField("port_no", 0xfffc),
                 ByteField("pad", 0 ),
                 ByteField("pad", 0),
                 BitField("queue_id", 0, 32)

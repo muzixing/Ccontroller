@@ -222,20 +222,20 @@ def client_handler(address, fd, events):
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)             #Type of  OFPST_DESC (0)
+                msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)             #Type of  OFPST_DESC (0)
                 #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 3)             #Type of  OFPST_TABLE (0)
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()      Type of flow stats.(1)
-                msg = of.ofp_header(type = 16, length = 56)/of.ofp_stats_request(type =1)\
-                                           /of.ofp_flow_wildcards()\
-                                            /of.ofp_match(in_port = 1)\
-                                           /of.ofp_flow_stats_request()#we will manipulate it in trans_agent
+                #msg = of.ofp_header(type = 16, length = 56)/of.ofp_stats_request(type =1)\
+                                           #/of.ofp_flow_wildcards()\
+                                           #/of.ofp_match(in_port = 1)\
+                                           #/of.ofp_flow_stats_request()#we will manipulate it in trans_agent
                 #msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type = 4)/of.ofp_port_stats_request(port_no = 1)# port stats request
                 #msg = of.ofp_header(type = 16, length =56)/of.ofp_stats_request(type = 2)\
                 #                    /of.ofp_flow_wildcards()/of.ofp_match()\
                 #                    /of.ofp_aggregate_stats_request()                                   # aggregate stats request
 
                 #msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type =5)/of.ofp_queue_stats_request()
-                msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0xffff)  #vendor request
+                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0xffff)  #vendor request
                 message_queue_map[sock].put(str(msg))
                 print "OFPT_STATS_REQUEST type = 1"
 

@@ -91,6 +91,24 @@ class switch():
                         data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
                     elif ofp_stats_request.type == 0:
                         print "send the ofp_stats_request(type = 0)"
+                    elif ofp_stats_request.type ==2:
+                        print "aggregate request"
+                        ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
+                        data_match = ofc.ofp_match(data[16:52])
+                        ofp_aggregate_stats_request = ofc.ofp_aggregate_stats_request(data[52:56])
+                        flow =  str(self.flow_cache)
+                        wildcards = ofc.ofp_flow_wildcards(flow[8:12])
+                        match = ofc.ofp_match(flow[12:48])
+
+                        data = header/ofp_stats_request/wildcards/match/ofp_aggregate_stats_request
+                    elif ofp_stats_request.type ==3:
+                        print "table request"
+                    elif ofp_stats_request.type ==4:
+                        print "port request"
+                    elif ofp_stats_request.type ==5:
+                        print "queue request" 
+                    elif ofp_stats_request.type ==0xffff:
+                        print "vendor request"
                 #there are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                 self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
@@ -141,7 +159,6 @@ class switch():
                 # Here, we can manipulate OpenFlow packets from SWITCH.
                 elif rmsg.type == 17:
                     print "stats_reply"
-
 
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))
