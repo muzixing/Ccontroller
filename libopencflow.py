@@ -504,13 +504,29 @@ class ofp_stats_reply(Packet):
     fields_desc=[ ShortEnumField("type", 0, ofp_stats_types),
                   ShortField("flag", 0)]
 
-#full message: ofp_flow_status()/ofp_flow_wildcards()/ofp_match()/ofp_status_data()/ofp_action_header()
+#full message: ofp_flow_stats()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_data()/ofp_action_header()
 class ofp_flow_stats(Packet):
     name = "OpenFlow Flow Stats"
     fields_desc=[ ShortField("length", 0),
                   BitField("table_id", 0, 8),
                   BitField("pad", 0, 8)]# following match strcture
-    
+class ofp_table_stats(Packet):
+    name = "OpenFlow Table Stats"
+    fields_desc=[ BitField("table_id", 0, 8),
+                  X3BytesField("pad", 0),
+                  StrFixedLenField("name", None, length=32)
+                ]
+#sizeof(ofp_table_stats == 64),so the strfixedlenfield's length is the byte not bit
+#full messege:ofp_table_stats()/ofp_wildcards()/ofp_table_stats_data()
+
+class ofp_table_stats_data(Packet):
+    name = "OpenFlow Table Stats data"
+    fields_desc=[ IntField("max_entries", 0),
+                  IntField("active_count", 0),
+                  BitField("lookup_count", 0, 64),
+                  BitField("matched_count", 0, 64)
+                ]
+
 class ofp_flow_stats_data(Packet):
     name = "OpenFlow Flow Stats Data"
     fields_desc=[ IntField("duration_sec", 0),
@@ -522,7 +538,86 @@ class ofp_flow_stats_data(Packet):
                   BitField("cookie", 0, 64),
                   BitField("packet_count", 0, 64),
                   BitField("byte_count", 0, 64)]# following ofp_action_header
+class ofp_desc_stats(Packet):
+  name = "Openflow desc stats"
+  fields_desc=[ StrFixedLenField("mfr_desc", None, length=256),
+                StrFixedLenField("hw_desc", None, length=256),
+                StrFixedLenField("sw_desc", None, length=256),
+                StrFixedLenField("serial_num", None, length=32),
+                StrFixedLenField("dp_desc", None, length=256)
+              ]
+#sizeof (ofp_desc_stats) =64  that is so terrible! longer than 1024
+#there is match before aggregate_stats_request
+class ofp_aggregate_stats_request(Packet):
+  name = "OpenFlow aggregate_stats_request"
+  fields_desc=[ BitField("table_id", 0, 8),
+                ByteField("pad", 0),
+                ShortField("out_port", 0)
+              ]
+    
+class ofp_aggregate_stats_reply(Packet):
+  name = "Openflow aggregate_stats"
+  fields_desc=[ BitField("packet_count", 0, 64),
+                BitField("byte_count", 0, 64),
+                BitField("flow_count", 0, 32),
+                X3BytesField("pad", 0),
+                ByteField("pad", 0)
+  ]
+#sizeof(aggregate_stats_reply) =24
 
+class ofp_port_stats_rqeuest(Packet):
+  name = "Openflow port stats request"
+  fields_desc=[ ShortField("port_no", 0),
+                X3BytesField("pad", 0),
+                X3BytesField("pad", 0)
+              ]
+#sizeof(port_stats_request) =8
+
+class ofp_port_stats_reply(Packet):
+  name = "Openflow port stats reply"
+  fields_desc=[ ShortField("port_no", 0),
+                X3BytesField("pad", 0),
+                X3BytesField("pad", 0),
+                BitField("rx_packets", 0, 64),
+                BitField("tx_packets", 0, 64),
+                BitField("rx_bytes", 0, 64),
+                BitField("tx_bytes", 0, 64),
+                BitField("rx_dropped", 0, 64),
+                BitField("tx_dropped", 0, 64),
+                BitField("rx_errors", 0, 64),
+                BitField("tx_errors", 0, 64),
+                BitField("rx_frame_err", 0, 64),
+                BitField("rx_over_err", 0, 64),
+                BitField("rx_crc_err", 0, 64),
+                BitField("collisions", 0, 64)
+                ]
+#sizeof(ofp_port_stats_reply)=104
+class ofp_queue_stats_request(Packet):
+  name = "Openflow queue stats request"
+  fields_desc=[ ShortField("port_no", 0),
+                ByteField("pad", 0 ),
+                ByteField("pad", 0),
+                BitField("queue_id", 0, 32)
+                ]
+#sizeof(ofp_queue_stats_request)= 8
+
+class ofp_queue_stats(Packet):
+  name = "Openflow queue stats reply"
+  fields_desc=[ ShortField("port_no", 0),
+                ByteField("pad", 0 ),
+                ByteField("pad", 0),
+                BitField("queue_id", 0, 32),
+                BitField("tx_bytes", 0, 64),
+                BitField("tx_packets", 0, 64),
+                BitField("tx_errors", 0, 64)
+                ]
+#sizeof(ofp_queue_stats)=32
+
+class ofp_vendor(Packet):
+  name = "Openflow vendor"
+  fields_desc=[ BitField("vendor", 0, 32)
+              ]
+#sizeof (ofp_vendor)= 4
 
 #_________________________________________________This is a new packet on OTN ,you need to pay attention.___________________________
 
@@ -603,8 +698,8 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 """
 0    none    "OFPT_HELLO",               8 bytes
 1    okay    "OFPT_ERROR",               8 + 12 bytes
-2    none    "OFPT_ECHO_REQUEST",
-3    none    "OFPT_ECHO_REPLY",
+2    okay    "OFPT_ECHO_REQUEST",
+3    okay    "OFPT_ECHO_REPLY",
 4            "OFPT_VENDOR",
 5    okay    "OFPT_FEATURES_REQUEST",
 6     OK     "OFPT_FEATURES_REPLY",
@@ -617,10 +712,10 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 13   okay    "OFPT_PACKET_OUT",# with action header
 14   okay    "OFPT_FLOW_MOD",
 15           "OFPT_PORT_MOD",
-16           "OFPT_STATS_REQUEST",
-17           "OFPT_STATS_REPLY",
-18   ok      "OFPT_BARRIER_REQUEST",
-19   ok      "OFPT_BARRIER_REPLY",
+16   okay    "OFPT_STATS_REQUEST",
+17   okay    "OFPT_STATS_REPLY",
+18   okay    "OFPT_BARRIER_REQUEST",
+19   okay    "OFPT_BARRIER_REPLY",
 20           "OFPT_QUEUE_GET_CONFIG_REQUEST",
 21           "OFPT_QUEUE_GET_CONFIG_REPLY"
 """
