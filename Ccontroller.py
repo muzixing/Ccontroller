@@ -20,7 +20,7 @@ cookie = 0
 exe_id = 0
 ofp_match_obj = of.ofp_match()
 ready = 0
-period = 4
+period = 10
 count = 1
 # dpid->type
 switch_info = {1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
@@ -160,7 +160,7 @@ def client_handler(address, fd, events):
                     reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
                     # 3.parsing actions
                     reply_body_action = []
-                    if len(body[92:]):                         #it is very important!
+                    if len(body[92:])>8:                         #it is very important!
                         num = len(body[92:])/8
                         for x in xrange(num):
                             reply_body_action.append(of.ofp_action_output(body[92+x*8:100+x*8]))
@@ -230,8 +230,8 @@ def client_handler(address, fd, events):
                 for i in range(len(port_info_raw)/72):
                     port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
-
-    if count % period == 0: 
+    global count
+    if ready and count % period == 0: 
         print "send stats_requests"
         #request the stats per 3 seconds
         message_queue_map[sock].put(str(stats.send(1)))  #the parameter is the type of stats request
@@ -286,4 +286,4 @@ if __name__ == '__main__':
         io_loop.start()
     except KeyboardInterrupt:
         io_loop.stop()
-        print "quit"
+        print "quit" 
