@@ -163,12 +163,17 @@ def client_handler(address, fd, events):
                     # should first judge action type 
                     i = 0
                     reply_body_action = []
-                    while i<len(body[92:]):
-                        if body[95+i:96+i]==0x08:
-                            print "0x08"
-                            i+=8
-                        if body[95+i:96+i] == 0x08:
-                            reply_body_action.append(of.ofp_action_output(body[92+i:100+i]))
+                    if len(body[92:]):                  #it is very important!
+                        num = len(body[92:])/8
+                        for x in xrange(num):
+                            reply_body_action.append(of.ofp_action_output(body[92+x*8:100+x*8]))
+                            
+                    #while i<len(body[92:]):
+                    #    if body[95+i:96+i]==0x08:
+                    #        print "0x08"
+                    #        i+=8
+                    #    if body[95+i:96+i] == 0x08:
+                    #        reply_body_action.append(of.ofp_action_output(body[92+i:100+i]))
                             #i+=8
                     # 4.show msg
                     msg = reply_header/reply_body_data1/reply_body_wildcards/reply_body_match/reply_body_data2

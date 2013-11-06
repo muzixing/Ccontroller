@@ -32,9 +32,10 @@ ofp_type = { 0: "OFPT_HELLO",
              19: "OFPT_BARRIER_REPLY",
              20: "OFPT_QUEUE_GET_CONFIG_REQUEST",
              21: "OFPT_QUEUE_GET_CONFIG_REPLY",
+             24:"OFPT_CFEATURES_REPLY",
              0xfe: "OFPT_CPORT_STATUS",
-             0xff: "OFPT_CFLOW_MOD",
-             24:"OFPT_CFEATURES_REPLY"}
+             0xff: "OFPT_CFLOW_MOD"
+             }
 
 ofp_port = { 0xff00: "OFPP_MAX",
              0xfff8: "OFPP_IN_PORT",
@@ -51,6 +52,12 @@ ofp_port_reason = { 1: "OFPPR_ADD",
                     3: "OFPPR_MODIFY",
                     254: "OFPPR_BW_MODIFY",
                     255: "OFPPR_BW_DOWN"}
+
+ofp_config_flags = {  0: "OFPC_FRAG_NORMAL",
+                      1: "OFPC_FRAG_DORP",
+                      2: "OFPC_FRAG_REASM",
+                      3: "OFPC_FRAG_MASK"
+                    }
 
 ofp_action_type = { 0: "OFPAT_OUTPUT",
                     1: "OFPAT_SET_VLAN_VID",
@@ -118,6 +125,9 @@ ofp_port_mod_failed_code = { 0: "OFPPMFC_BAD_PORT",
 
 ofp_queue_op_failed_code = { 0: "OFPQOFC_BAD_PORT",
                              1: "OFPQOFC_BAD_QUEUE"}
+
+ofp_queue_properties = {  0: "OFPQT_NONE",
+                          1: "OFPQT_MIN_RATE"}
 
 ofp_stats_types = { 0: "OFPST_DESC",
                     1: "OFPST_FLOW",
@@ -425,6 +435,15 @@ class ofp_cfeatures_reply(Packet):
 #bind_layers(ofp_features_reply,ofp_phy_cport)#can we do it ?
 bind_layers( ofp_header, ofp_features_reply, type= 24)
 
+#No. 8 or 9
+#header()/ofp_switch_config()
+class ofp_switch_config(object):
+  name = "Openflow switch config"
+  fields_desc=[ ShortField("flags", 0),
+                ShortField("miss_send_len", 65535)
+              ]
+#sizeof(ofp_switch_config) = 12
+
 # No. 10
 class ofp_packet_in(Packet):
     name = "OpenFlow Packet In"
@@ -433,6 +452,27 @@ class ofp_packet_in(Packet):
                   ShortField("in_port", None),
                   ByteEnumField("reason", 0, ofp_packet_in_reason),
                   ByteField("pad", None)]
+
+#No. 11 
+#full message is header()/match()/flow_removed
+class ofp_flow_removed(Packet):
+  name = "Openflow flow removed"
+  fields_desc = [ BitField("cookie", 0, 64),
+                  BitField("priority", 0,16),
+                  BitField("reason", 0, 8),
+                  ByteField("pad", None),
+                  BitField("duration_sec", 0, 32),
+                  BitField("duration_nsec", 0, 32),
+                  BitField("idle_timeout", 0, 16),
+                  ByteField("pad", 0),
+                  ByteField("pad", 0),
+                  BitField("packet_count", 0, 64),
+                  BitField("byte_count", 0, 64)
+                ]
+#sizeof(ofp_flow_removed)=88 
+
+
+
 # No. 12
 class ofp_port_status(Packet):
     name = "OpenFLow Port Status"
@@ -482,7 +522,20 @@ class ofp_flow_mod(Packet):
                   #1<<2 bit is OFPFF_EMERG, used only switch disconnected with controller) 
                   ShortField("flags", 0)
                 ]
-    
+#No. 15
+#header()/ofp_port_mod()
+class ofp_port_mod(object):
+  name = "Openflow port mod"
+  fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
+                MACField("hw_addr","00:00:00:00:00:00"),
+                BitField("config", 0, 32),
+                BitField("mask", 0, 32),
+                BitField("advertise", 0, 32),
+                X3BytesField("pad", 0),
+                ByteField("pad", 0)
+              ]
+#sizeof(ofp_port_mod)=32
+
 # No. 16 
 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
 class ofp_stats_request(Packet):
@@ -575,7 +628,7 @@ class ofp_port_stats_request(Packet):
 
 class ofp_port_stats_reply(Packet):
   name = "Openflow port stats reply"
-  fields_desc=[ ShortField("port_no", 0),
+  fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
                 X3BytesField("pad", 0),
                 X3BytesField("pad", 0),
                 BitField("rx_packets", 0, 64),
@@ -603,7 +656,7 @@ class ofp_queue_stats_request(Packet):
 
 class ofp_queue_stats(Packet):
   name = "Openflow queue stats reply"
-  fields_desc=[ ShortField("port_no", 0),
+  fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
                 ByteField("pad", 0 ),
                 ByteField("pad", 0),
                 BitField("queue_id", 0, 32),
@@ -619,6 +672,49 @@ class ofp_vendor(Packet):
               ]
 #sizeof (ofp_vendor)= 4
 
+#No.20
+class ofp_queue_get_config_request(Packet):
+  name = "Openflow queue get config request"
+  fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
+                ByteField("pad", 0),
+                ByteField("pad", 0)
+              ]
+#sizeof(ofp_queue_get_config_request)=12
+
+#No.21
+class ofp_queue_get_config_reply(Packet):
+  name = "Openflow queue get config reply"
+  fields_desc=[ ShortEnumField("port_no", 0, ofp_port),
+                X3BytesField("pad", 0),
+                X3BytesField("pad", 0)
+              ]
+#sizeof(ofp_queue_get_config_request)=16
+
+class ofp_packet_queue(Packet):
+  name = "Openflow packet queue"
+  fields_desc=[ BitField("queue_id", 0, 32),
+                ShortField("len", 0),
+                ByteField("pad", 0),
+                ByteField("pad", 0)
+  ]
+#sizeof(ofp_packet_queue)= 8  full message ofp_packet_queue()/ofp_queue_prop_header()
+
+class ofp_queue_prop_header(Packet):
+  name = "Openflow queue prop header"
+  fields_desc= [  ShortEnumField("property", 0, ofp_queue_properties),
+                  ShortField("len", 0),
+                  X3BytesField("pad", 0),
+                  ByteField("pad", 0)
+                ]
+#sizeof(ofp_queue_prop_header)=8
+
+class ofp_queue_prop_min_rate(Packet):
+  name = "Openflow queue property min rate"
+  fields_desc=[ ShortField("rate", 0),
+                X3BytesField("pad", 0),
+                X3BytesField("pad", 0),
+                ]
+#sizeof(ofp_queue_prop_min_rate)= 16 full message is ofp_queue_prop_header()/ofp_queue_prop_min_rate()
 #_________________________________________________This is a new packet on OTN ,you need to pay attention.___________________________
 
 
@@ -696,28 +792,31 @@ bind_layers( ofp_connect_wildcards, ofp_connect)
 ####################
 
 """
-0    none    "OFPT_HELLO",               8 bytes
+0    okay    "OFPT_HELLO",               8 bytes
 1    okay    "OFPT_ERROR",               8 + 12 bytes
 2    okay    "OFPT_ECHO_REQUEST",
 3    okay    "OFPT_ECHO_REPLY",
-4            "OFPT_VENDOR",
+4    okay    "OFPT_VENDOR",
 5    okay    "OFPT_FEATURES_REQUEST",
-6     OK     "OFPT_FEATURES_REPLY",
-7            "OFPT_GET_CONFIG_REQUEST",
-8            "OFPT_GET_CONFIG_REPLY",
-9            "OFPT_SET_CONFIG",
+6    okay    "OFPT_FEATURES_REPLY",
+7    oaky    "OFPT_GET_CONFIG_REQUEST",
+8    okay    "OFPT_GET_CONFIG_REPLY",
+9    okay    "OFPT_SET_CONFIG",
 10   okay    "OFPT_PACKET_IN",
-11           "OFPT_FLOW_REMOVED",
-12           "OFPT_PORT_STATUS",
+11   okay    "OFPT_FLOW_REMOVED",
+12   okay    "OFPT_PORT_STATUS",
 13   okay    "OFPT_PACKET_OUT",# with action header
 14   okay    "OFPT_FLOW_MOD",
-15           "OFPT_PORT_MOD",
+15   okay    "OFPT_PORT_MOD",
 16   okay    "OFPT_STATS_REQUEST",
 17   okay    "OFPT_STATS_REPLY",
 18   okay    "OFPT_BARRIER_REQUEST",
 19   okay    "OFPT_BARRIER_REPLY",
-20           "OFPT_QUEUE_GET_CONFIG_REQUEST",
-21           "OFPT_QUEUE_GET_CONFIG_REPLY"
+20   okay    "OFPT_QUEUE_GET_CONFIG_REQUEST",
+21   okay    "OFPT_QUEUE_GET_CONFIG_REPLY"
+24   oaky    "OFPT_CFEATURES_REPLY"
+0xfe oaky    "OFPT_CPORT_STATUS" 
+0xff okay    "OFPT_CFLOW_MO
 """
     
 if __name__ == '__main__':

@@ -50,7 +50,7 @@ class switch():
         self.buffer     = {}
         self.counter    = 0
         self.dpid       = 0
-        self.flow_cache = 0#use for save the flow
+        self.flow_cache = {}#use for save the flow
         
     def controller_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -73,7 +73,7 @@ class switch():
                     actions = data[92:]         # No using,because it is empty!
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
-                    self.flow_cache = data 
+                    self.flow_cache.add(data) 
                     print "flow_mod_msg xid:", header.xid
 
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
@@ -84,11 +84,14 @@ class switch():
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
-                        flow =  str(self.flow_cache)
-                        ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
-                        ofp_flow_match = ofc.ofp_match(flow[12:48])
-
-                        data = header/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
+                        for f in self.flow_cache:                                                     #we need all flows stats
+                            flow = str(f)
+                            ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
+                            ofp_flow_match = ofc.ofp_match(flow[12:48])
+                            data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
+                            print "send a stats request"
+                            io_loop.update_handler(self.fd_sw, io_loop.WRITE)
+                            self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
                     elif ofp_stats_request.type == 0:
                         print "send the ofp_stats_request(type = 0)"
                     elif ofp_stats_request.type ==2:
@@ -157,8 +160,16 @@ class switch():
                     rmsg.xid = self.counter
                     data = rmsg/pkt_in_msg/pkt_parsed
                 # Here, we can manipulate OpenFlow packets from SWITCH.
+                elif rmsg.type ==11:
+                    match = ofc.ofp_match(data[12:48])              #data[8:12]is wildcards
+                    for flow in  self.flow_cache:
+                        if match == ofc.ofp_match(flow[12:48]):
+                            self.flow_cache.pop(flow)               #delete the flow
+                            print "pop a flow"                      #if the flow is not matched, and it won't be removed, so we can not delete it by using this if.
+
                 elif rmsg.type == 17:
                     print "stats_reply"
+
 
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))
