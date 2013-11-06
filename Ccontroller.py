@@ -4,6 +4,7 @@ import functools
 import tornado.ioloop as ioloop
 import socket
 import libopencflow as of
+import stats_request as stats
 
 import Queue
 import time
@@ -18,7 +19,7 @@ global ofp_match_obj
 cookie = 0
 exe_id = 0
 ofp_match_obj = of.ofp_match()
-
+ready = 0
 # dpid->type
 switch_info = {1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
 
@@ -57,23 +58,11 @@ def client_handler(address, fd, events):
             elif rmsg.type == 1:
                 print "OFPT_ERROR"
                 of.ofp_error_msg(body).show()
-            elif rmsg.type == 6:
-                print "OFPT_FEATURES_REPLY"
-                msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
-                sock_dpid[fd]=msg.datapath_id                             #sock_dpid[fd] comes from here.
-                #msg.show()
-                port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
-                port_info = {}
-                print "port number:",len(port_info_raw)/48, "total length:", len(port_info_raw)
-                for i in range(len(port_info_raw)/48):
-                    port_info[i] = of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
-                    print port_info[i].port_no     
+  
 
             elif rmsg.type == 2:
                 print "OFPT_ECHO_REQUEST"
                 msg = of.ofp_header(type=3, xid=rmsg.xid)
-                
-                #test for status request [which is good]
                 global exe_id 
                 global ofp_match_obj
                 
@@ -85,14 +74,23 @@ def client_handler(address, fd, events):
                 print "OFPT_VENDOR" #USE FOR WHAT?
             elif rmsg.type == 5:
                 print "OFPT_FEATURES_REQUEST"
+            elif rmsg.type == 6:
+                print "OFPT_FEATURES_REPLY"
+                msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
+                sock_dpid[fd]=msg.datapath_id                             #sock_dpid[fd] comes from here.
+                ready = 1                                                 #change the flag
 
+                port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
+                port_info = {}
+                print "port number:",len(port_info_raw)/48, "total length:", len(port_info_raw)
+                for i in range(len(port_info_raw)/48):
+                    port_info[i] = of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
+                    print port_info[i].port_no   
             elif rmsg.type == 10:
-                #print "OFPT_PACKET_IN"
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
                 dpid = sock_dpid[fd]
-                
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -106,27 +104,27 @@ def client_handler(address, fd, events):
                     io_loop.update_handler(fd, io_loop.WRITE)
                     message_queue_map[sock].put(str(pkt_out_))
                 if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                    if isinstance(pkt_parsed.payload.payload.payload, of.ICMP) or isinstance(pkt_parsed.payload.payload, of.ICMP) or 1: #all IP packets.
-                        cflow_mod = of.ofp_header(type=14, xid=rmsg.xid)\
+                    cflow_mod = of.ofp_header(type=14, xid=rmsg.xid)\
                                     /of.ofp_cflow_mod(command=0)\
                                     /of.ofp_connect_wildcards()\
                                     /of.ofp_connect(in_port = pkt_in_msg.in_port)\
                                     /of.ofp_action_output(type=0, port=0xfffb, len=8)
                         
-                        type=switch_info[sock_dpid[fd]]
-                        grain=host_info[type][pkt_in_msg.in_port]
-                        if type == "otn":
-                            cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
-                            cflow_mod.payload.payload.payload.nport_out = 0xfffb
-                            cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
-                            cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
-                        elif type == "wave":
-                            cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
-                            cflow_mod.payload.payload.payload.wport_out = 0xfffb
-                            cflow_mod.payload.payload.payload.num_wave_out = grain
+                    type=switch_info[sock_dpid[fd]]
+                    grain=host_info[type][pkt_in_msg.in_port]
+                    if type == "otn":
+                        cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
+                        cflow_mod.payload.payload.payload.nport_out = 0xfffb
+                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
+                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
+                    elif type == "wave":
+                        cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
+                        cflow_mod.payload.payload.payload.wport_out = 0xfffb
+                        cflow_mod.payload.payload.payload.num_wave_out = grain
 
-                        message_queue_map[sock].put(str(cflow_mod))
-                        io_loop.update_handler(fd, io_loop.WRITE)
+                    message_queue_map[sock].put(str(cflow_mod))
+                    io_loop.update_handler(fd, io_loop.WRITE)
+
                 print "OFPT_BARRIER_REQUEST"
                 msg = of.ofp_header(type = 18,xid = rmsg.xid) 
                 message_queue_map[sock].put(str(msg))
@@ -143,7 +141,6 @@ def client_handler(address, fd, events):
                 print "OFPT_PORT_MOD"
             elif rmsg.type == 16:
                 print "OFPT_STATS_REQUEST"
-                
             elif rmsg.type == 17:
                 print "OFPT_STATS_REPLY"
                 # 1. parsing ofp_stats_reply
@@ -151,8 +148,8 @@ def client_handler(address, fd, events):
                 # 2.parsing ofp_flow_stats msg
                 if reply_header.type == 0:
                     reply_desc = of.ofp_desc_stats(body[4:])
-                    reply.show()#can it work?
-                elif reply_header.type == 1:
+                    reply.show()
+                elif reply_header.type == 1 and len(data)>92:
                     reply_body_data1 = of.ofp_flow_stats(body[4:8])
                     # match field in ofp_flow_stats
                     reply_body_wildcards = of.ofp_flow_wildcards(body[8:12])
@@ -160,25 +157,14 @@ def client_handler(address, fd, events):
                     # second part in ofp_flow_stats
                     reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
                     # 3.parsing actions
-                    # should first judge action type 
-                    i = 0
                     reply_body_action = []
-                    if len(body[92:]):                  #it is very important!
+                    if len(body[92:]):                         #it is very important!
                         num = len(body[92:])/8
                         for x in xrange(num):
                             reply_body_action.append(of.ofp_action_output(body[92+x*8:100+x*8]))
                             
-                    #while i<len(body[92:]):
-                    #    if body[95+i:96+i]==0x08:
-                    #        print "0x08"
-                    #        i+=8
-                    #    if body[95+i:96+i] == 0x08:
-                    #        reply_body_action.append(of.ofp_action_output(body[92+i:100+i]))
-                            #i+=8
-                    # 4.show msg
                     msg = reply_header/reply_body_data1/reply_body_wildcards/reply_body_match/reply_body_data2
                     msg.show()
-                    print reply_body_action
 
                 elif reply_header.type == 2:
                     reply_aggregate = of.ofp_aggregate_stats_reply(body[4:])
@@ -195,7 +181,7 @@ def client_handler(address, fd, events):
                         reply_table_stats_data = of.ofp_table_stats_data(table_body[40:64])
                         msg_tmp = reply_header/reply_table_stats/table_wildcards/reply_table_stats_data
                     msg = rmsg/msg_tmp
-                    msg.show()#this is the reply of table_stats
+                    msg.show() 
                 elif reply_header.type == 4:
                     #port stats reply
                     length = rmsg.length - 12
@@ -210,7 +196,7 @@ def client_handler(address, fd, events):
                     #queue reply
                     length = rmsg.length - 12
                     num = length/32
-                    if num:                          #if the queue is empty ,you need to check it !
+                    if num:                     #if the queue is empty ,you need to check it !
                         for i in xrange(num):
                             offset = 4+i*32
                             queue_reply = of.ofp_queue_stats(body[offset:offset+32])
@@ -223,36 +209,19 @@ def client_handler(address, fd, events):
 
             elif rmsg.type == 18:
                 print "OFPT_BARRIER_REQUEST"
-            
             #no message body, the xid is the previous barrier request xid
             elif rmsg.type == 19:
                 print "OFPT_BARRIER_REPLY: ", rmsg.xid, "Successful"
-                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0)             #Type of  OFPST_DESC (0)
-                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 3)             #Type of  OFPST_TABLE (0)
-                #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()      Type of flow stats.(1)
-                #msg = of.ofp_header(type = 16, length = 56)/of.ofp_stats_request(type =1)\
-                                           #/of.ofp_flow_wildcards()\
-                                           #/of.ofp_match(in_port = 1)\
-                                           #/of.ofp_flow_stats_request()#we will manipulate it in trans_agent
-                #msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type = 4)/of.ofp_port_stats_request(port_no = 1)# port stats request
-                #msg = of.ofp_header(type = 16, length =56)/of.ofp_stats_request(type = 2)\
-                #                    /of.ofp_flow_wildcards()/of.ofp_match()\
-                #                    /of.ofp_aggregate_stats_request()                                   # aggregate stats request
-
-                msg = of.ofp_header(type = 16, length =20)/of.ofp_stats_request(type =5)/of.ofp_queue_stats_request()
-                #msg = of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0xffff)  #vendor request
-                message_queue_map[sock].put(str(msg))
-                io_loop.update_handler(fd, io_loop.WRITE)
             elif rmsg.type == 20:
                 print "OFPT_QUEUE_GET_CONFIG_REQUEST"
             elif rmsg.type == 21:
                 print "OFPT_QUEUE_GET_CONFIG_REPLY"
             elif rmsg.type == 24:
                 print "OFPT_CFEATURES_REPLY"
-                #print "rmsg.load:",len(body)/48
-                msg = of.ofp_cfeatures_reply(body[0:24])#length of reply msg
+                ready = 1                               #change the flag
+                msg = of.ofp_cfeatures_reply(body[0:24])
                 sock_dpid[fd]=msg.datapath_id
-                #msg.show()
+                
                 port_info_raw = body[24:]
                 port_info = {}
                 print "port number:",len(port_info_raw)/72, "total length:", len(port_info_raw)
@@ -260,7 +229,12 @@ def client_handler(address, fd, events):
                     port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
 
-                #------------------------------------------------------We finish the actions of manipulateing___________________________
+    if ready and (time.time()/1000)%3 == 0:
+        print "send stats_requests"
+        #request the stats per 3 seconds
+        message_queue_map[sock].put(str(stats.send(1)))  #the parameter is the type of stats request
+        io_loop.update_handler(fd, io_loop.WRITE)
+                #------------------------------------------------------We finish the actions of manipulateing________________________
 
     if events & io_loop.WRITE:
         try:
