@@ -20,6 +20,8 @@ cookie = 0
 exe_id = 0
 ofp_match_obj = of.ofp_match()
 ready = 0
+period = 4
+count = 1
 # dpid->type
 switch_info = {1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
 
@@ -229,11 +231,13 @@ def client_handler(address, fd, events):
                     port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
 
-    if ready and (time.time()/1000)%3 == 0:
+    if count % period == 0: 
         print "send stats_requests"
         #request the stats per 3 seconds
         message_queue_map[sock].put(str(stats.send(1)))  #the parameter is the type of stats request
         io_loop.update_handler(fd, io_loop.WRITE)
+        count = 1
+    count+=1
                 #------------------------------------------------------We finish the actions of manipulateing________________________
 
     if events & io_loop.WRITE:
