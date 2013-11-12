@@ -163,8 +163,8 @@ class switch():
                 elif rmsg.type ==11:
                     match = ofc.ofp_match(data[12:48])              #data[8:12]is wildcards
                     for flow in  self.flow_cache:
-                        if match == ofc.ofp_match(flow[12:48]):
-                            self.flow_cache.pop(flow)               #delete the flow
+                        if match == ofc.ofp_match(str(flow)[12:48]):
+                            self.flow_cache.remove(flow)               #delete the flow
                             print "pop a flow"                      #if the flow is not matched, and it won't be removed, so we can not delete it by using this if.
 
                 elif rmsg.type == 17:

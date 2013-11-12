@@ -138,6 +138,7 @@ def ofc2of(msg, buffer, dpid):
             pkt_parsed = pkt.payload.payload
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                     if isinstance(pkt_parsed.payload.payload.payload, of.ICMP):
+                        print "ICMP packets"
                         flow_mod_msg = of.ofp_header(type=14,
                                                      length=88,)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
