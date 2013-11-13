@@ -20,9 +20,9 @@ cookie = 0
 exe_id = 0
 ofp_match_obj = of.ofp_match()
 ready = 0
-period = 10
+period = 15
 count = 1
-# dpid->type     that is totally wrong!
+# dpid->type    
 switch_info = {0:"ip", 1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
 
 # port->grain+slot(otn)/wave length(wave)
@@ -79,7 +79,8 @@ def client_handler(address, fd, events):
             elif rmsg.type == 6:
                 print "OFPT_FEATURES_REPLY"
                 msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
-                sock_dpid[fd]=(0, msg.datapath_id)                           #sock_dpid[fd] comes from here.
+                sock_dpid[fd]=[0, msg.datapath_id]                          #sock_dpid[fd] comes from here.
+                global ready
                 ready = 1                                                 #change the flag
 
                 port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
@@ -92,7 +93,7 @@ def client_handler(address, fd, events):
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
-                dpid = sock_dpid[fd][1]
+                dpid = sock_dpid[fd][1]    #if there is not the key of sock_dpid[fd] ,it will be an error.
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -114,8 +115,6 @@ def client_handler(address, fd, events):
                         
                     type=switch_info[sock_dpid[fd][0]]  # we should get the type right here.
                     
-
-
                     grain=host_info[type][pkt_in_msg.in_port]
                     if type == "otn":
                         cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
@@ -146,7 +145,7 @@ def client_handler(address, fd, events):
                 print "OFPT_PORT_MOD"
             elif rmsg.type == 16:
                 print "OFPT_STATS_REQUEST"
-            elif rmsg.type == 17:
+            elif rmsg.type == 17 and len(data)> 12:
                 print "OFPT_STATS_REPLY"
                 # 1. parsing ofp_stats_reply
                 reply_header = of.ofp_stats_reply(body[:4])
@@ -223,18 +222,19 @@ def client_handler(address, fd, events):
                 print "OFPT_QUEUE_GET_CONFIG_REPLY"
             elif rmsg.type == 24:
                 print "OFPT_CFEATURES_REPLY"
+                global ready
                 ready = 1                               #change the flag
                 msg = of.ofp_cfeatures_reply(body[0:24])
                 
                 #bind the bpid and type  (type,  dpid)
                 if msg.OFPC_OTN_SWITCH and msg.OFPC_WAVE_SWITCH:
-                    sock_dpid[fd]=(2, msg.datapath_id)
+                    sock_dpid[fd]=[2, msg.datapath_id]
                 elif msg.OFPC_OTN_SWITCH:
-                    sock_dpid[fd]=(1, msg.datapath_id)
+                    sock_dpid[fd]=[1, msg.datapath_id]
                 elif msg.OFPC_WAVE_SWITCH:
-                    sock_dpid[fd]=(3, msg.datapath_id)
+                    sock_dpid[fd]=[3, msg.datapath_id]
                 else:
-                    sock_dpid[fd]=(0, msg.datapath_id) 
+                    sock_dpid[fd]=[0, msg.datapath_id] 
                 
                 port_info_raw = body[24:]
 

@@ -168,11 +168,10 @@ class switch():
                     for flow in  self.flow_cache:
                         if match == ofc.ofp_match(str(flow)[12:48]):
                             self.flow_cache.remove(flow)               #delete the flow
-                            print "pop a flow"                      #if the flow is not matched, and it won't be removed, so we can not delete it by using this if.
+                            print "remove a flow"                      #if the flow is not matched, and it won't be removed, so we can not delete it by using this if.
 
                 elif rmsg.type == 17:
                     print "stats_reply" ,len(data)
-
 
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))

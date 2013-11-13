@@ -3,8 +3,10 @@ sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib
 from scapy.all import *
 
 #uint8_t => XByteField
-#uint16_t => ShortField, BitFieldLenField('name', None, 16, length_of='varfield')
-#uint32_t => IntField, BitFieldLenField('name', None, 32, length_of='varfield'),
+#uint16_t => ShortField, BitFieldLenField('name', None, 16, length_of='varfield'),BitField('name', None, 16)
+
+#uint32_t => IntField, BitFieldLenField('name', None, 32, length_of='varfield'), BitFieldLenField('name', None, 32)
+
 
 ###################
 # Data Structures #

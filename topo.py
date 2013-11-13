@@ -59,6 +59,3 @@ if __name__ == "__main__":
 	net.start()
 	CLI(net)
 	net.stop()
-
-
-

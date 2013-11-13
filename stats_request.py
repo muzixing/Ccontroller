@@ -18,5 +18,3 @@ msg = {	0: of.ofp_header(type = 16, length = 12)/of.ofp_stats_request(type = 0),
 
 def send(Type):
 	return msg[Type]
-
-	
