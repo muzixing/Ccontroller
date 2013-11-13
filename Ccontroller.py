@@ -22,8 +22,8 @@ ofp_match_obj = of.ofp_match()
 ready = 0
 period = 10
 count = 1
-# dpid->type
-switch_info = {1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
+# dpid->type     that is totally wrong!
+switch_info = {0:"ip", 1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
 
 # port->grain+slot(otn)/wave length(wave)
 host_info = {           #odu0      #odu1    #odu2
@@ -79,7 +79,7 @@ def client_handler(address, fd, events):
             elif rmsg.type == 6:
                 print "OFPT_FEATURES_REPLY"
                 msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
-                sock_dpid[fd]=msg.datapath_id                             #sock_dpid[fd] comes from here.
+                sock_dpid[fd]=(0, msg.datapath_id)                           #sock_dpid[fd] comes from here.
                 ready = 1                                                 #change the flag
 
                 port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
@@ -92,7 +92,7 @@ def client_handler(address, fd, events):
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
-                dpid = sock_dpid[fd]
+                dpid = sock_dpid[fd][1]
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -106,13 +106,16 @@ def client_handler(address, fd, events):
                     io_loop.update_handler(fd, io_loop.WRITE)
                     message_queue_map[sock].put(str(pkt_out_))
                 if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                    cflow_mod = of.ofp_header(type=14, xid=rmsg.xid)\
+                    cflow_mod = of.ofp_header(type=0xff, xid=rmsg.xid)\
                                     /of.ofp_cflow_mod(command=0)\
                                     /of.ofp_connect_wildcards()\
                                     /of.ofp_connect(in_port = pkt_in_msg.in_port)\
                                     /of.ofp_action_output(type=0, port=0xfffb, len=8)
                         
-                    type=switch_info[sock_dpid[fd]]
+                    type=switch_info[sock_dpid[fd][0]]  # we should get the type right here.
+                    
+
+
                     grain=host_info[type][pkt_in_msg.in_port]
                     if type == "otn":
                         cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
@@ -222,16 +225,28 @@ def client_handler(address, fd, events):
                 print "OFPT_CFEATURES_REPLY"
                 ready = 1                               #change the flag
                 msg = of.ofp_cfeatures_reply(body[0:24])
-                sock_dpid[fd]=msg.datapath_id
+                
+                #bind the bpid and type  (type,  dpid)
+                if msg.OFPC_OTN_SWITCH and msg.OFPC_WAVE_SWITCH:
+                    sock_dpid[fd]=(2, msg.datapath_id)
+                elif msg.OFPC_OTN_SWITCH:
+                    sock_dpid[fd]=(1, msg.datapath_id)
+                elif msg.OFPC_WAVE_SWITCH:
+                    sock_dpid[fd]=(3, msg.datapath_id)
+                else:
+                    sock_dpid[fd]=(0, msg.datapath_id) 
                 
                 port_info_raw = body[24:]
+
                 port_info = {}
                 print "port number:",len(port_info_raw)/72, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/72):
                     port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
+
+
     global count
-    if ready and count % period == 0: 
+    if ready and count % period == 0:  
         print "send stats_requests"
         #request the stats per 3 seconds
         message_queue_map[sock].put(str(stats.send(1)))  #the parameter is the type of stats request

@@ -64,7 +64,7 @@ class switch():
             else:
                 rmsg = of.ofp_header(data[0:8])
                 # Here, we can manipulate OpenFlow packets from CONTROLLER.
-                if rmsg.type == 14:  #cflow_mod   #firstly,we split the packet.
+                if rmsg.type == 0xff:  #cflow_mod   #firstly,we split the packet.
                     header = ofc.ofp_header(data[0:8])
                     print "ofc_xid = ", header.xid
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
@@ -75,6 +75,8 @@ class switch():
                     data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
                     self.flow_cache.append(data) 
                     print "flow_mod_msg xid:", header.xid
+                elif rmsg.type == 14:
+                    print "send flow_mod"
 
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
                 elif rmsg.type == 16:
@@ -135,6 +137,7 @@ class switch():
                 io_loop.remove_handler(self.fd_con)
             else:
                 rmsg = of.ofp_header(data[0:8])
+
                 if rmsg.type == 6:
                     print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
                     header = of.ofp_header(data[0:8]) 
@@ -148,7 +151,7 @@ class switch():
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                     self.queue_con.put(str(data))#put it into the queue of packet which need to send to controller.  
-      
+                
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
                     pkt_parsed = of.Ether(data[18:])

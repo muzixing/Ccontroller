@@ -8,9 +8,10 @@ import re
 from mininet.cli import CLI
 from mininet.log import setLogLevel, info,error
 from mininet.net import Mininet
+from mininet.link import Intf
 from mininet.topolib import TreeTopo
 from mininet.util import quietRun
-
+from mininet.node import RemoteController, OVSKernelSwitch
 def checkIntf(intf):
 	#make sure intface exists and is not configured.
 	if(' %s:'% intf) not in quietRun('ip link show'):
@@ -20,19 +21,18 @@ def checkIntf(intf):
 	if ips:
 		error("Error:", intf, 'has an IP address,'
 			'and is probably in use!\n')
-			exit(1)
+		exit(1)
 if __name__ == "__main__":
 	setLogLevel("info")
-	newIntf = 'eth1'
 	OVSKernelSwitch.setup()
 	intfName_1 = "eth2"
 	intfName_3 = "eth3"
-	info("********checking", intfName_1, '\n')
+	info("****checking", intfName_1, '\n')
 	checkIntf(intfName_1)
-	info("********checking", intfName_2, '\n')
-	checkIntf(intfName_2)
+	info("****checking", intfName_3, '\n')
+	checkIntf(intfName_3)
 
-	info("*******creating network\n")
+	info("*****creating network\n")
 	net = Mininet(listenPort = 6633)
 
 	mycontroller = RemoteController("muziController", ip = "192.168.0.1")
@@ -42,17 +42,19 @@ if __name__ == "__main__":
 	switch_3 = net.addSwitch('s3')
 	switch_4 = net.addSwitch('s4')
 
-	net.controller = [mycontroller]
-	info("*****Adding hardware interface ", intfName_1, "to switch:" switch_1.name, '\n')
-	info("*****Adding hardware interface ", intfName_3, "to switch:" switch_3.name, '\n')
+	net.controllers = [mycontroller]
+	info("*****Adding hardware interface ", intfName_1, "to switch:" ,switch_1.name, '\n')
+	info("*****Adding hardware interface ", intfName_3, "to switch:" ,switch_3.name, '\n')
 
 	_intf_1 = Intf(intfName_1, node = switch_1)
 	_intf_3 = Intf(intfName_3, node = switch_3)
 
-	net.addLink(switch_1, switch_2, '2', '1')
-	net.addLink(switch_2, switch_3, '2', '3')
-	net.addLink(switch_1, switch_4, '3', '1')
-	net.addLink(switch_4, switch_3, '2', '2')
+	net.addLink(switch_1, switch_2, 2, 1)# node1, node2, port1, port2
+	net.addLink(switch_2, switch_3, 2, 3)
+	net.addLink(switch_1, switch_4, 3, 1)
+	#net.addLink(switch_4, switch_3, 2, 2)
+
+	info("Node: you may need to reconfigure the interfaces for the Mininet hosts:\n", net.hosts, '\n')
 
 	net.start()
 	CLI(net)
