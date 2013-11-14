@@ -142,11 +142,10 @@ class switch():
                     print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
                     header = of.ofp_header(data[0:8]) 
                     print "ofp_features_reply.xid ", header.xid
-                    msg = of.ofp_features_reply(data[8:32])     #we need to make some change here.
+                    msg = of.ofp_features_reply(data[8:32])     #all sw type should make the convertion. Because our protocol need to use in all nets.
                     msg_port = data[32:]
                     msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id
-                    #check the switch type
 
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
