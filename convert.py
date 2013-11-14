@@ -172,9 +172,12 @@ def ofc2of(msg, buffer, dpid):
                                                     flags=1)
                         if msg.payload.payload.payload.nport_out:
                             port = msg.payload.payload.payload.nport_out
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         elif msg.payload.payload.payload.wport_out:
                             port = msg.payload.payload.payload.wport_out
-                        flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                        else:
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
@@ -206,7 +209,7 @@ def ofc2of(msg, buffer, dpid):
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
                         return flow_mod_msg
 #____________________________________The others packets____________________________________________________________________
                 else:
@@ -245,9 +248,12 @@ def ofc2of(msg, buffer, dpid):
                                                     flags=1)
                         if msg.payload.payload.payload.nport_out:
                             port = msg.payload.payload.payload.nport_out
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         elif msg.payload.payload.payload.wport_out:
                             port = msg.payload.payload.payload.wport_out
-                        flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                        else:
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
@@ -279,7 +285,7 @@ def ofc2of(msg, buffer, dpid):
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
                         return flow_mod_msg
     
 #_____________________________________________________ The rule of converting_____________________________________________________                          
