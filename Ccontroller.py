@@ -106,7 +106,7 @@ def client_handler(address, fd, events):
                     
                     io_loop.update_handler(fd, io_loop.WRITE)
                     message_queue_map[sock].put(str(pkt_out_))
-                if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
+                if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):   #sometimes, you need to send the flow_mod.
                     cflow_mod = of.ofp_header(type=0xff, xid=rmsg.xid)\
                                     /of.ofp_cflow_mod(command=0)\
                                     /of.ofp_connect_wildcards()\
@@ -115,13 +115,14 @@ def client_handler(address, fd, events):
                         
                     type=switch_info[sock_dpid[fd][0]]  # we should get the type right here.
                     
-                    grain=host_info[type][pkt_in_msg.in_port]
                     if type == "otn":
+                        grain=host_info[type][pkt_in_msg.in_port]
                         cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.nport_out = 0xfffb
                         cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
                         cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
                     elif type == "wave":
+                        grain=host_info[type][pkt_in_msg.in_port]
                         cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.wport_out = 0xfffb
                         cflow_mod.payload.payload.payload.num_wave_out = grain

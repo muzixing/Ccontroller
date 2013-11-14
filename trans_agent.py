@@ -142,7 +142,7 @@ class switch():
                     print "OFPT_FEATURES_REPLY"                                                  #Actually,we just need to change here.
                     header = of.ofp_header(data[0:8]) 
                     print "ofp_features_reply.xid ", header.xid
-                    msg = of.ofp_features_reply(data[8:32])
+                    msg = of.ofp_features_reply(data[8:32])     #we need to make some change here.
                     msg_port = data[32:]
                     msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id
@@ -241,7 +241,7 @@ def agent(sock, fd, events):
     switch_handler = functools.partial(new_switch.switch_handler, address)
     io_loop.add_handler(connection.fileno(), switch_handler, io_loop.READ)
     print "agent: connected to switch", num
-
+    
 if __name__ == '__main__':
     """
     For Tornado, there usually is only one thread, listening to the socket
