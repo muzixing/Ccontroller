@@ -5,15 +5,22 @@ class  sw():
 	def __init__(self,sw_type, sw_no):
 		self.sw_type = sw_type
 		self.sw_no = sw_no
+		if sw_no not in sw_type:
+			sw_no = 1
 		self.type_otn = sw_type[sw_no][0]
 		self.type_wave = sw_type[sw_no][1]
+
 
 class  MyPort():
 	def __init__(self, f, wave, sw_no, port_no):
 		self.f = f
 		self.wave =wave
-		self.port_no = port_no
 		self.sw_no = sw_no
+		if sw_no not in sw_type:
+			sw_no = 1  #default
+		self.port_no = port_no
+		if port_no not in f[sw_no]:
+			port_no = 65534   #default
 #______________port_info________________________
 		self.OFPST_FIBER = f[sw_no][port_no][0]     
 		self.OFPST_WAVE = f[sw_no][port_no][1]      
@@ -37,7 +44,9 @@ class  MyPort():
 		self.freq_space_lmda = wave[sw_no][port_no][2]
 #_________________________________________________________
 def creat_port(sw_no, port_no):
-	return MyPort(M.features, M.f_wave, sw_no, port_no)
+	if port_no in M.features
+		return MyPort(M.features, M.f_wave, sw_no, port_no)
+
 def creat_sw(sw_no):
 	return sw(M.sw_type, sw_no)
 #_________________________________________________________
