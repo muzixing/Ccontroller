@@ -37,10 +37,10 @@ if __name__ == "__main__":
 
 	mycontroller = RemoteController("muziController", ip = "192.168.0.1")
 
-	switch_1 = net.addSwitch('s1', dpid = 1)
-	switch_2 = net.addSwitch('s2', dpid = 2)
-	switch_3 = net.addSwitch('s3', dpid = 3)
-	switch_4 = net.addSwitch('s4', dpid = 4)
+	switch_1 = net.addSwitch('s1')
+	switch_2 = net.addSwitch('s2')
+	switch_3 = net.addSwitch('s3')
+	switch_4 = net.addSwitch('s4')
 
 	net.controllers = [mycontroller]
 	info("*****Adding hardware interface ", intfName_1, "to switch:" ,switch_1.name, '\n')

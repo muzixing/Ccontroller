@@ -9,7 +9,7 @@ class  sw():
 		self.type_wave = sw_type[sw_no][1]
 
 class  MyPort():
-	def __init__(self, f, wave, port_no, sw_no):
+	def __init__(self, f, wave, sw_no, port_no):
 		self.f = f
 		self.wave =wave
 		self.port_no = port_no
@@ -36,8 +36,8 @@ class  MyPort():
 		self.num_lmda = wave[sw_no][port_no][1]
 		self.freq_space_lmda = wave[sw_no][port_no][2]
 #_________________________________________________________
-def creat_port(port_no, sw_no):
-	return MyPort(M.features, M.f_wave, port_no, sw_no)
+def creat_port(sw_no, port_no):
+	return MyPort(M.features, M.f_wave, sw_no, port_no)
 def creat_sw(sw_no):
 	return sw(M.sw_type, sw_no)
 #_________________________________________________________

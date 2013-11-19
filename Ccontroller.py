@@ -223,7 +223,7 @@ def client_handler(address, fd, events):
                 print "OFPT_QUEUE_GET_CONFIG_REPLY"
             elif rmsg.type == 24:
                 print "OFPT_CFEATURES_REPLY"
-                global ready
+                
                 ready = 1                               #change the flag
                 msg = of.ofp_cfeatures_reply(body[0:24])
                 
