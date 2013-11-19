@@ -41,7 +41,7 @@ def of2ofc(msg, buffer, dpid):
             MyPort = {}
             #print port_num                                            #we need to know how many ports. 
 
-            sw = setting.creat_sw(1)  
+            sw = setting.creat_sw(pkt_parsed.datapath_id)  
 
             cfeatures_reply = ofc.ofp_cfeatures_reply(datapath_id = pkt_parsed.datapath_id,
                                                   n_buffers = pkt_parsed.n_buffers,
@@ -64,7 +64,7 @@ def of2ofc(msg, buffer, dpid):
             for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
 
-                MyPort[i] = setting.creat_port(1, i)  #we show use the port_no
+                MyPort[i] = setting.creat_port(pkt_parsed.datapath_id, phy_port[i].port_no)  #we show use the port_no
 
                 phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,
