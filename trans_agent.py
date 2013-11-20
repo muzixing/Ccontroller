@@ -127,10 +127,11 @@ class switch():
                 io_loop.update_handler(self.fd_con, io_loop.READ)
             else:
                 self.sock_con.send(next_msg)
-#____________delete the flow cache by hard_time_____________________
+#____________delete the flow cache by hard_timeout_____________________
         for f in self.flow_cache:
             if fresh(f):
                 self.flow_cache.remove(f)
+                print "remove a flow_cache by hard_timeout"
 
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -258,10 +259,10 @@ def agent(sock, fd, events):
     io_loop.add_handler(connection.fileno(), switch_handler, io_loop.READ)
     print "agent: connected to switch", num
     
-def fresh(list):
-    if time.time()-list[0]>list[1].payload.payload.payload.hard_time:
+def fresh(f_list):
+    if int(time.time()-f_list[0])>f_list[1].payload.payload.payload.hard_timeout:
         return 1
-    else
+    else:
         return 0
     
 if __name__ == '__main__':
