@@ -9,6 +9,7 @@ import socket
 import libopenflow as of
 import libopencflow as ofc
 import convert
+import time
 
 import Queue
 
@@ -64,17 +65,18 @@ class switch():
             else:
                 rmsg = of.ofp_header(data[0:8])
                 # Here, we can manipulate OpenFlow packets from CONTROLLER.
-                if rmsg.type == 0xff:  #cflow_mod   #firstly,we split the packet.
+                if rmsg.type == 0xff:                           #cflow_mod   
                     header = ofc.ofp_header(data[0:8])
                     print "ofc_xid = ", header.xid
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
-                    actions = data[92:]         # No using,because it is empty!
+
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
-                    data = convert.ofc2of(msg, self.buffer, self.dpid) #sencondly,we rebuilt the packet.
-                    self.flow_cache.append(data) 
-                    print "flow_mod_msg xid:", header.xid
+                    data = convert.ofc2of(msg, self.buffer, self.dpid) 
+                    self.flow_cache.append((time.time(),data)） 
+
+                    print "flow_mod_msg xid:", header.xid 
                 elif rmsg.type == 14:
                     print "send flow_mod"
 
@@ -86,7 +88,7 @@ class switch():
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
-                        for f in self.flow_cache:                                                     #we need all flows stats
+                        for f in self.flow_cache[][1]:                                                     #we need all flows stats
                             flow = str(f)
                             ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                             ofp_flow_match = ofc.ofp_match(flow[12:48])
@@ -114,9 +116,9 @@ class switch():
                         print "queue request" 
                     elif ofp_stats_request.type ==0xffff:
                         print "vendor request"
-                #there are no need to change other packets,just send them!
+                #There are no need to change other packets,just send them!
                 io_loop.update_handler(self.fd_sw, io_loop.WRITE)
-                self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
+                self.queue_sw.put(str(data))
     
         if events & io_loop.WRITE:
             try:
@@ -147,9 +149,9 @@ class switch():
                     msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id
 
-                    data = convert.of2ofc(msg, self.buffer, self.dpid)   #we use the covert's of2ofc function to finish the transfer. 
+                    data = convert.of2ofc(msg, self.buffer, self.dpid)   
                     io_loop.update_handler(self.fd_sw, io_loop.WRITE)
-                    self.queue_con.put(str(data))#put it into the queue of packet which need to send to controller.  
+                    self.queue_con.put(str(data))
                 
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
@@ -163,14 +165,26 @@ class switch():
                     data = rmsg/pkt_in_msg/pkt_parsed
                 # Here, we can manipulate OpenFlow packets from SWITCH.
                 elif rmsg.type ==11:
-                    match = ofc.ofp_match(data[12:48])              #data[8:12]is wildcards
+                    match = ofc.ofp_match(data[12:48])                  #data[8:12]is wildcards
                     for flow in  self.flow_cache:
-                        if match == ofc.ofp_match(str(flow)[12:48]):
-                            self.flow_cache.remove(flow)               #delete the flow
-                            print "remove a flow"                      #if the flow is not matched, and it won't be removed, so we can not delete it by using this if.
+                        if match == ofc.ofp_match(str(flow[1])[12:48]):
+                            self.flow_cache.remove(flow)                #delete the flow
+                            print "remove a old flow"   
 
                 elif rmsg.type == 17:
                     print "stats_reply" ,len(data)
+                    body = data[8:]
+                    reply_header = of.ofp_stats_reply(body[:4])
+                    if reply_header.type == 1:
+                        reply_body_match = of.ofp_match(body[12:48])
+                        reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
+                        if reply_body_data2.byte_count == 0 and reply_body_data2.packet_count == 0:  #it is a junck flow,delete it!
+                            for flow in  self.flow_cache:
+                                if reply_body_match == ofc.ofp_match(str(flow[1])[12:48]):
+                                    self.flow_cache.remove(flow)    
+                                    print "remove a junck flow " 
+ 
+
 
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))

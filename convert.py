@@ -24,7 +24,6 @@ def of2ofc(msg, buffer, dpid):
         if isinstance(msg.payload, of.ofp_flow_mod):
             #basic structure: of.ofp_header()/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_mod()/other_ofp_actions()
             #select info from match (VLAN) and actions (just copy)
-            print "1"
         if isinstance(msg.payload, of.ofp_features_reply):
             print"it is a ofp_features_reply packet"
             
@@ -39,7 +38,6 @@ def of2ofc(msg, buffer, dpid):
             phy_port = {}
             phy_cport = {}
             MyPort = {}
-            #print port_num                                            #we need to know how many ports. 
 
             sw = setting.creat_sw(pkt_parsed.datapath_id)  
 
@@ -53,18 +51,18 @@ def of2ofc(msg, buffer, dpid):
                                                   OFPC_WAVE_SWITCH = sw.type_wave,   #1<<30
 
                                                   OFPC_ARP_MATCH_IP = pkt_parsed.OFPC_ARP_MATCH_IP,
-                                                  OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,  #1<<6 Queue statistics
-                                                  OFPC_IP_STREAM = pkt_parsed.OFPC_IP_STREAM,     #1<<5 Can reassemble IP fragments
-                                                  OFPC_RESERVED = pkt_parsed.OFPC_RESERVED,     #1<<4 Reserved, must be zero
-                                                  OFPC_STP = pkt_parsed.OFPC_STP,         #1<<3 802.1d spanning tree
-                                                  OFPC_PORT_STATS =pkt_parsed.OFPC_PORT_STATS,    #1<<2 Port statistics
-                                                  OFPC_TABLE_STATS = pkt_parsed.OFPC_TABLE_STATS,  #1<<1 Table statistics
-                                                  OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,    #1<<0 Flow statistics
+                                                  OFPC_QUEUE_STATS = pkt_parsed.OFPC_QUEUE_STATS,   #1<<6 Queue statistics
+                                                  OFPC_IP_STREAM = pkt_parsed.OFPC_IP_STREAM,       #1<<5 Can reassemble IP fragments
+                                                  OFPC_RESERVED = pkt_parsed.OFPC_RESERVED,         #1<<4 Reserved, must be zero
+                                                  OFPC_STP = pkt_parsed.OFPC_STP,                   #1<<3 802.1d spanning tree
+                                                  OFPC_PORT_STATS =pkt_parsed.OFPC_PORT_STATS,      #1<<2 Port statistics
+                                                  OFPC_TABLE_STATS = pkt_parsed.OFPC_TABLE_STATS,   #1<<1 Table statistics
+                                                  OFPC_FLOW_STATS = pkt_parsed.OFPC_FLOW_STATS,     #1<<0 Flow statistics
                                                   actions = pkt_parsed.actions)
             for i in xrange(port_num):  
                 phy_port[i] = of.ofp_phy_port(port_raw[i*48:i*48+48]) 
 
-                MyPort[i] = setting.creat_port(pkt_parsed.datapath_id, phy_port[i].port_no)  #we show use the port_no
+                MyPort[i] = setting.creat_port(pkt_parsed.datapath_id, phy_port[i].port_no)
 
                 phy_cport[i] =  ofc.ofp_phy_cport(port_no = phy_port[i].port_no, 
                                                   hw_addr = phy_port[i].hw_addr,
@@ -108,7 +106,6 @@ def of2ofc(msg, buffer, dpid):
                                                              num_lmda = MyPort[i].num_lmda,
                                                              freq_space_lmda = MyPort[i].freq_space_lmda
                                                              )
-                #print phy_cport[i].port_no,phy_port[i].port_no 
                 cfeatures_reply =cfeatures_reply/phy_cport[i]    
                 
             cfeatures_reply = ofc.ofp_header(type = 24, length =port_num*74+32,)/cfeatures_reply
@@ -132,10 +129,10 @@ def ofc2of(msg, buffer, dpid):
             buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
             del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
 
-            #######   pkt_parsed is a Ethernet packet
+            ################################   pkt_parsed is a Ethernet packet#######################
             pkt_parsed = pkt.payload.payload
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                #__________________________________________TCP OR UDP OR SCTP_______________________________________________________
+#__________________________________________TCP OR UDP OR SCTP________________________________________________________________________________________
                 if isinstance(pkt_parsed.payload.payload, of.TCP) or isinstance(pkt_parsed.payload.payload, of.UDP) or isinstance(pkt_parsed.payload.payload, of.SCTP) :
                     print "it is TCP or UDP or SCTP packet"
                     if  pkt_parsed.type ==0x8100:
