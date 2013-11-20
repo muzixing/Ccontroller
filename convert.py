@@ -24,6 +24,7 @@ def of2ofc(msg, buffer, dpid):
         if isinstance(msg.payload, of.ofp_flow_mod):
             #basic structure: of.ofp_header()/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_mod()/other_ofp_actions()
             #select info from match (VLAN) and actions (just copy)
+            pass
         if isinstance(msg.payload, of.ofp_features_reply):
             print"it is a ofp_features_reply packet"
             #basic structure:0fc.ofp_header()/ofc.ofp_cfeatures_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 

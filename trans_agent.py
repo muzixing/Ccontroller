@@ -127,6 +127,10 @@ class switch():
                 io_loop.update_handler(self.fd_con, io_loop.READ)
             else:
                 self.sock_con.send(next_msg)
+#____________delete the flow cache by hard_time_____________________
+        for f in self.flow_cache:
+            if fresh(f):
+                self.flow_cache.remove(f)
 
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -163,23 +167,22 @@ class switch():
                     #change the xid in header, so that the agent can track the packet/buffer_id more precisely
                     rmsg.xid = self.counter
                     data = rmsg/pkt_in_msg/pkt_parsed
-                # Here, we can manipulate OpenFlow packets from SWITCH.
                 elif rmsg.type ==11:
                     match = ofc.ofp_match(data[12:48])                  #data[8:12]is wildcards
                     for flow in  self.flow_cache:
                         if match == ofc.ofp_match(str(flow[1])[12:48]):
                             self.flow_cache.remove(flow)                #delete the flow
-                            print "remove a old flow"   
+                            print "remove a old flow"    
 
                 elif rmsg.type == 17:
                     print "stats_reply" ,len(data)
                     body = data[8:]
                     reply_header = of.ofp_stats_reply(body[:4])
-                    if reply_header.type == 1:
-                        reply_body_match = of.ofp_match(body[12:48])
-                        reply_body_data2 = of.ofp_flow_stats_data(body[48:92])
+                    if reply_header.type == 1 and len(data)>91:
+                        reply_body_match = ofc.ofp_match(body[12:48])
+                        reply_body_data2 = ofc.ofp_flow_stats_data(body[48:92])
                         if reply_body_data2.byte_count == 0 and reply_body_data2.packet_count == 0:  #it is a junck flow,delete it!
-                            for flow in  self.flow_cache:
+                            for flow in  self.flow_cache: 
                                 if reply_body_match == ofc.ofp_match(str(flow[1])[12:48]):
                                     self.flow_cache.remove(flow)    
                                     print "remove a junck flow " 
@@ -255,6 +258,12 @@ def agent(sock, fd, events):
     io_loop.add_handler(connection.fileno(), switch_handler, io_loop.READ)
     print "agent: connected to switch", num
     
+def fresh(list):
+    if time.time()-list[0]>list[1].payload.payload.payload.hard_time:
+        return 1
+    else
+        return 0
+    
 if __name__ == '__main__':
     """
     For Tornado, there usually is only one thread, listening to the socket
@@ -268,7 +277,7 @@ if __name__ == '__main__':
     sock.bind(("", 6633))
     sock.listen(6633)
     num = 0
-    controllerIP = "192.168.0.46"
+    controllerIP = "192.168.0.61"
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()
