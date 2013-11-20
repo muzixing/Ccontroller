@@ -26,9 +26,7 @@ def of2ofc(msg, buffer, dpid):
             #select info from match (VLAN) and actions (just copy)
         if isinstance(msg.payload, of.ofp_features_reply):
             print"it is a ofp_features_reply packet"
-            
             #basic structure:0fc.ofp_header()/ofc.ofp_cfeatures_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 
-            #we select the right field to fix our new packet.
             pkt_parsed = msg.payload                        #feature_reply
             port_info = msg.payload.payload
             print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id

@@ -74,7 +74,7 @@ class switch():
 
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
                     data = convert.ofc2of(msg, self.buffer, self.dpid) 
-                    self.flow_cache.append((time.time(),data)） 
+                    self.flow_cache.append([time.time(),data])
 
                     print "flow_mod_msg xid:", header.xid 
                 elif rmsg.type == 14:
@@ -88,8 +88,8 @@ class switch():
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
-                        for f in self.flow_cache[][1]:                                                     #we need all flows stats
-                            flow = str(f)
+                        for f in self.flow_cache:
+                            flow = str(f[1])
                             ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                             ofp_flow_match = ofc.ofp_match(flow[12:48])
                             data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
