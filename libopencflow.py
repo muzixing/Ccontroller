@@ -549,7 +549,7 @@ class ofp_stats_request(Packet):
 #need to add a match field before this pkt
 class ofp_flow_stats_request(Packet):
     name = "OpenFlow Flow Stats Request"
-    fields_desc=[ BitField("table_id", 0xff, 8), #all flows by default
+    fields_desc=[ ByteField("table_id", 0xff), #all flows by default
                   BitField("pad", 0, 8),
                   ShortField("out_port", 0xffff)] #no restriction by default, ofp_port.OFPP_NONE
 

@@ -6,6 +6,8 @@
         # " 0   0" 
         #[0,0]=IP ,[1,0]=OTN, [0,1] = WAVE, [1,1] = OTN & WAVE
 #######################################
+#the count of sending stats_request
+period = 15
 
 sw_type = {	1:[1,0],
 			2:[0,0],

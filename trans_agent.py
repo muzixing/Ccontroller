@@ -88,6 +88,7 @@ class switch():
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
+                        print "look at the number:"len(self.flow_cache)
                         for f in self.flow_cache:
                             flow = str(f[1])
                             ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])

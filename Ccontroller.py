@@ -5,6 +5,7 @@ import tornado.ioloop as ioloop
 import socket
 import libopencflow as of
 import stats_request as stats
+import MySetting 
 
 import Queue
 import time
@@ -20,7 +21,7 @@ cookie = 0
 exe_id = 0
 ofp_match_obj = of.ofp_match()
 ready = 0
-period = 15
+period = MySetting.period
 count = 1
 # dpid->type    
 switch_info = {0:"ip", 1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
