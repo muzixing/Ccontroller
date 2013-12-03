@@ -137,7 +137,18 @@ def ofc2of(msg, buffer, dpid):
                     if  pkt_parsed.type ==0x8100:
                         print "pkt_parsed.payload.vlan",pkt_parsed.payload.vlan
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
-                                   /of.ofp_flow_wildcards()\
+                                   /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                                                          OFPFW_DL_VLAN_PCP=1,
+                                                          OFPFW_NW_DST_MASK=0,
+                                                          OFPFW_NW_SRC_MASK=0,
+                                                          OFPFW_TP_DST=0,
+                                                          OFPFW_TP_SRC=0,
+                                                          OFPFW_NW_PROTO=1,
+                                                          OFPFW_DL_TYPE=1,
+                                                          OFPFW_DL_VLAN=1,
+                                                          OFPFW_IN_PORT=1,
+                                                          OFPFW_DL_DST=1,
+                                                          OFPFW_DL_SRC=1)\
                                    /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
                                                  dl_src=pkt_parsed.src,
                                                  dl_dst=pkt_parsed.dst,
@@ -166,7 +177,18 @@ def ofc2of(msg, buffer, dpid):
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
-                                   /of.ofp_flow_wildcards()\
+                                   /of.ofp_flow_wildcards(OFPFW_NW_TOS=0,
+                                                          OFPFW_DL_VLAN_PCP=0,
+                                                          OFPFW_NW_DST_MASK=0,
+                                                          OFPFW_NW_SRC_MASK=0,
+                                                          OFPFW_TP_DST=0,
+                                                          OFPFW_TP_SRC=0,
+                                                          OFPFW_NW_PROTO=0,
+                                                          OFPFW_DL_TYPE=0,
+                                                          OFPFW_DL_VLAN=0,
+                                                          OFPFW_IN_PORT=0,
+                                                          OFPFW_DL_DST=0,
+                                                          OFPFW_DL_SRC=0)\
                                    /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
                                                  dl_src=pkt_parsed.src,
                                                  dl_dst=pkt_parsed.dst,
@@ -202,18 +224,18 @@ def ofc2of(msg, buffer, dpid):
                     if  pkt_parsed.type ==0x8100:
                         print "pkt_parsed.payload.vlan",pkt_parsed.payload.vlan
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
-                                   /of.ofp_flow_wildcards(OFPFW_NW_TOS=0,
-                                                          OFPFW_DL_VLAN_PCP=0,
-                                                          OFPFW_NW_DST_MASK=0,
-                                                          OFPFW_NW_SRC_MASK=0,
+                                   /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                                                          OFPFW_DL_VLAN_PCP=1,
+                                                          OFPFW_NW_DST_MASK=1,
+                                                          OFPFW_NW_SRC_MASK=1,
                                                           OFPFW_TP_DST=0,
                                                           OFPFW_TP_SRC=0,
-                                                          OFPFW_NW_PROTO=0,
+                                                          OFPFW_NW_PROTO=1,
                                                           OFPFW_DL_TYPE=0,
-                                                          OFPFW_DL_VLAN=0,
+                                                          OFPFW_DL_VLAN=1,
                                                           OFPFW_IN_PORT=0,
-                                                          OFPFW_DL_DST=0,
-                                                          OFPFW_DL_SRC=0)\
+                                                          OFPFW_DL_DST=1,
+                                                          OFPFW_DL_SRC=1)\
                                    /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
                                                  dl_src=pkt_parsed.src,
                                                  dl_dst=pkt_parsed.dst,
@@ -242,7 +264,18 @@ def ofc2of(msg, buffer, dpid):
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
-                                   /of.ofp_flow_wildcards()\
+                                   /of.ofp_flow_wildcards(OFPFW_NW_TOS=0,
+                                                          OFPFW_DL_VLAN_PCP=0,
+                                                          OFPFW_NW_DST_MASK=0,
+                                                          OFPFW_NW_SRC_MASK=0,
+                                                          OFPFW_TP_DST=0,
+                                                          OFPFW_TP_SRC=0,
+                                                          OFPFW_NW_PROTO=0,
+                                                          OFPFW_DL_TYPE=0,
+                                                          OFPFW_DL_VLAN=0,
+                                                          OFPFW_IN_PORT=0,
+                                                          OFPFW_DL_DST=0,
+                                                          OFPFW_DL_SRC=0)\
                                    /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
                                                  dl_src=pkt_parsed.src,
                                                  dl_dst=pkt_parsed.dst,
