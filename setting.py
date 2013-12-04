@@ -9,6 +9,7 @@ class  sw():
 			sw_no = 1
 		self.type_otn = sw_type[sw_no][0]
 		self.type_wave = sw_type[sw_no][1]
+		self.type_ip = sw_type[sw_no][2]
 
 
 class  MyPort():

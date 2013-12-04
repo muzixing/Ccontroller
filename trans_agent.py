@@ -91,10 +91,10 @@ class switch():
                         print "look at the number:"len(self.flow_cache)
                         for f in self.flow_cache:
                             flow = str(f[1])
-                            ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
+                            #ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                             ofp_flow_match = ofc.ofp_match(flow[12:48])
-                            data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
-                            print "send a stats request"
+                            data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofc.ofp_flow_wildcards()/ofp_flow_match/ofp_flow_stats_request
+                            print "send a stats request" 
                             io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                             self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
                     elif ofp_stats_request.type == 0:
@@ -156,9 +156,6 @@ class switch():
                     self.dpid=msg.datapath_id
 
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   
-                    io_loop.update_handler(self.fd_sw, io_loop.WRITE)
-                    self.queue_con.put(str(data))
-                
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
                     pkt_parsed = of.Ether(data[18:])
@@ -175,7 +172,6 @@ class switch():
                         if match == ofc.ofp_match(str(flow[1])[12:48]):
                             self.flow_cache.remove(flow)                #delete the flow
                             print "remove a old flow"    
-
                 elif rmsg.type == 17:
                     print "stats_reply" ,len(data)
                     body = data[8:]
@@ -188,9 +184,6 @@ class switch():
                                 if reply_body_match == ofc.ofp_match(str(flow[1])[12:48]):
                                     self.flow_cache.remove(flow)    
                                     print "remove a junck flow " 
- 
-
-
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))
     

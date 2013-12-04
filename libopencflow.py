@@ -306,7 +306,7 @@ class ofp_flow_wildcards(Packet):
                   BitField("OFPFW_NW_PROTO", 0, 1), #1<<5 IP protocol
                   BitField("OFPFW_DL_TYPE", 0, 1),  #1<<4 Ethernet frame type
                   BitField("OFPFW_DL_DST",0, 1),    #1<<3 Ethernet destination address
-                  BitField("OFPFW_DL_SRC", 0, 1),   #1<<2 Ethernet source address
+                  BitField("OFPFW_DL_SRC", 0, 1),    #1<<2 Ethernet source address
                   BitField("OFPFW_DL_VLAN", 0, 1),  #1<<1 VLAN id
                   BitField("OFPFW_IN_PORT", 0, 1)   #1<<0 Switch input port
                 ]
@@ -422,7 +422,8 @@ class ofp_cfeatures_reply(Packet):
                   #features
                   BitField("OFPC_OTN_SWITCH", 0, 1),    #1<<31
                   BitField("OFPC_WAVE_SWITCH", 0, 1),   #1<<30
-                  BitField("NOT_DEFINED", 0, 22),
+                  BitField("OFPC_IP_SWITCH", 0, 1),    #1<<29
+                  BitField("NOT_DEFINED", 0, 21),
                   BitField("OFPC_ARP_MATCH_IP", 0, 1),  #1<<7 Match IP address in ARP packets
                   BitField("OFPC_QUEUE_STATS", 0, 1),   #1<<6 Queue statistics
                   BitField("OFPC_IP_STREAM", 0, 1),     #1<<5 Can reassemble IP fragments

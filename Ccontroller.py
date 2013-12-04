@@ -24,15 +24,15 @@ ready = 0
 period = MySetting.period
 count = 1
 # dpid->type    
-switch_info = {0:"ip", 1:"otn", 2:"otn", 3:"wave"} # 1 otn; 2 otn->wave; 3 wave
+switch_info = {0:"ip", 1:"ip", 2:"wave", 3:"wave+ip",   4:"otn", 5:"otn+ip", 6:"otn+wave", 7: "wave+otn+ip"} # 1 otn; 2 otn->wave; 3 wave
 
 # port->grain+slot(otn)/wave length(wave)
 host_info = {           #odu0      #odu1    #odu2
-                "otn":{1:(0,64), 2:(1,22), 3:(2,6)},
+                "otn":{1:(0,64), 2:(1,22), 3:(2,6), 4:(2,5)},
+                "otn+ip":{1:(0,64), 2:(1,22), 3:(2,6), 4:(2,5)},
                 "wave":{1:96, 2:95, 3:94}
             }
                 
-
 def handle_connection(connection, address):
         print "1 connection,", connection, address
 
@@ -80,7 +80,7 @@ def client_handler(address, fd, events):
             elif rmsg.type == 6:
                 print "OFPT_FEATURES_REPLY"
                 msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
-                sock_dpid[fd]=[0, msg.datapath_id]                          #sock_dpid[fd] comes from here.
+                sock_dpid[fd]=[0, msg.datapath_id]                        #sock_dpid[fd] comes from here.
                 global ready
                 ready = 1                                                 #change the flag
 
@@ -94,7 +94,7 @@ def client_handler(address, fd, events):
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
                 pkt_parsed = of.Ether(raw)
-                dpid = sock_dpid[fd][1]    #if there is not the key of sock_dpid[fd] ,it will be an error.
+                dpid = sock_dpid[fd][1]                                     #if there is not the key of sock_dpid[fd] ,it will be an error.
                 
                 if isinstance(pkt_parsed.payload, of.ARP):
                     
@@ -114,9 +114,15 @@ def client_handler(address, fd, events):
                                     /of.ofp_connect(in_port = pkt_in_msg.in_port)\
                                     /of.ofp_action_output(type=0, port=0xfffb, len=8)
                         
-                    type=switch_info[sock_dpid[fd][0]]  # we should get the type right here.
+                    type=switch_info[sock_dpid[fd][0]]
                     
                     if type == "otn":
+                        grain=host_info[type][pkt_in_msg.in_port]
+                        cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
+                        cflow_mod.payload.payload.payload.nport_out = 0xfffb
+                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
+                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
+                    elif type == "otn+ip":
                         grain=host_info[type][pkt_in_msg.in_port]
                         cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.nport_out = 0xfffb
@@ -228,18 +234,13 @@ def client_handler(address, fd, events):
                 ready = 1                               #change the flag
                 msg = of.ofp_cfeatures_reply(body[0:24])
                 
-                #bind the bpid and type  (type,  dpid)
-                if msg.OFPC_OTN_SWITCH and msg.OFPC_WAVE_SWITCH:
-                    sock_dpid[fd]=[2, msg.datapath_id]
-                elif msg.OFPC_OTN_SWITCH:
-                    sock_dpid[fd]=[1, msg.datapath_id]
-                elif msg.OFPC_WAVE_SWITCH:
-                    sock_dpid[fd]=[3, msg.datapath_id]
-                else:
-                    sock_dpid[fd]=[0, msg.datapath_id] 
-                
-                port_info_raw = body[24:]
+                #bind the dpid and type  (type,  dpid)
 
+                Type = msg.msg.OFPC_OTN_SWITCH*4 +msg.OFPC_WAVE_SWITCH*2 + msg.OFPC_IP_SWITCH
+                
+                sock_dpid[fd]=[Type, msg.datapath_id]
+                
+                port_info_raw = body[24:]            
                 port_info = {}
                 print "port number:",len(port_info_raw)/72, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/72):
