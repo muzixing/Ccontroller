@@ -128,37 +128,36 @@ def ofc2of(msg, buffer, dpid):
             # [port + id] --> [buffer_id + pkt_in_msg]
             if (msg.payload.payload.payload.in_port, msg.xid) not in buffer:
                 #Do not change the match and wildcards.
-                flow_mod = of.ofp_header(type=14,length=88,)/\
-                         /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
-                                                OFPFW_DL_VLAN_PCP=1,
-                                                OFPFW_NW_DST_MASK=0,
-                                                OFPFW_NW_SRC_MASK=0,
-                                                OFPFW_TP_DST=1,
-                                                OFPFW_TP_SRC=1,
-                                                OFPFW_NW_PROTO=1,
-                                                OFPFW_DL_TYPE=1,
-                                                OFPFW_DL_VLAN=1,
-                                                OFPFW_IN_PORT=1,
-                                                OFPFW_DL_DST=1,
-                                                OFPFW_DL_SRC=1)/\
-                                                 /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
-                                                               #dl_src=pkt_parsed.src,
-                                                               #dl_dst=pkt_parsed.dst,
-                                                               #dl_type=pkt_parsed.type,
-                                                               #dl_vlan=pkt_parsed.payload.vlan,
-                                                               #nw_tos=pkt_parsed.payload.tos,
-                                                               #nw_proto=pkt_parsed.payload.proto,
-                                                               #nw_src=pkt_parsed.payload.src,
-                                                               #nw_dst=pkt_parsed.payload.dst,
-                                                               #tp_src = pkt_parsed.payload.payload.sport,
-                                                               #tp_dst = pkt_parsed.payload.payload.dport
-                                                               )\
-                                                 /of.ofp_flow_mod(cookie=0,
-                                                                  command=0,
-                                                                  idle_timeout=0,
-                                                                  hard_timeout=0,
-                                                                  buffer_id=0,#Does it work?
-                                                                  flags=1)
+                flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                           /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                                                  OFPFW_DL_VLAN_PCP=1,
+                                                  OFPFW_NW_DST_MASK=0,
+                                                  OFPFW_NW_SRC_MASK=0,
+                                                  OFPFW_TP_DST=1,
+                                                  OFPFW_TP_SRC=1,
+                                                  OFPFW_NW_PROTO=1,
+                                                  OFPFW_DL_TYPE=1,
+                                                  OFPFW_DL_VLAN=1,
+                                                  OFPFW_IN_PORT=1,
+                                                  OFPFW_DL_DST=1,
+                                                  OFPFW_DL_SRC=1)\
+                           /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
+                                         #dl_src=pkt_parsed.src,
+                                         #dl_dst=pkt_parsed.dst,
+                                         #dl_type=pkt_parsed.type,
+                                         #dl_vlan=pkt_parsed.payload.vlan,
+                                         #nw_tos=pkt_parsed.payload.tos,
+                                         #nw_proto=pkt_parsed.payload.proto,
+                                         #nw_src=pkt_parsed.payload.src,
+                                         #nw_dst=pkt_parsed.payload.dst,
+                                         #tp_src = pkt_parsed.payload.payload.sport,
+                                         #tp_dst = pkt_parsed.payload.payload.dport)\
+                           /of.ofp_flow_mod(cookie=0,
+                                            command=0,
+                                            idle_timeout=0,
+                                            hard_timeout=0,
+                                            buffer_id=-1,
+                                            flags=1)
                 if msg.payload.payload.payload.nport_out:
                     vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
                     port = msg.payload.payload.payload.nport_out
