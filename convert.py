@@ -128,7 +128,7 @@ def ofc2of(msg, buffer, dpid):
             # [port + id] --> [buffer_id + pkt_in_msg]
             if (msg.payload.payload.payload.in_port, msg.xid) not in buffer:
                 #Do not change the match and wildcards.
-                flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                flow_mod = of.ofp_header(type=14,length=88,)\
                            /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
                                                   OFPFW_DL_VLAN_PCP=1,
                                                   OFPFW_NW_DST_MASK=0,
@@ -141,17 +141,7 @@ def ofc2of(msg, buffer, dpid):
                                                   OFPFW_IN_PORT=1,
                                                   OFPFW_DL_DST=1,
                                                   OFPFW_DL_SRC=1)\
-                           /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
-                                         #dl_src=pkt_parsed.src,
-                                         #dl_dst=pkt_parsed.dst,
-                                         #dl_type=pkt_parsed.type,
-                                         #dl_vlan=pkt_parsed.payload.vlan,
-                                         #nw_tos=pkt_parsed.payload.tos,
-                                         #nw_proto=pkt_parsed.payload.proto,
-                                         #nw_src=pkt_parsed.payload.src,
-                                         #nw_dst=pkt_parsed.payload.dst,
-                                         #tp_src = pkt_parsed.payload.payload.sport,
-                                         #tp_dst = pkt_parsed.payload.payload.dport)\
+                           /of.ofp_match(in_port=msg.payload.payload.payload.in_port)\
                            /of.ofp_flow_mod(cookie=0,
                                             command=0,
                                             idle_timeout=0,
@@ -169,7 +159,7 @@ def ofc2of(msg, buffer, dpid):
                     print "vid", vid
                     flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                 else:
-                    flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                    flow_mod_msg = flow_mod/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
                 return flow_mod_msg 
 #________________________________________use the packet_in to send the flow________________________________________________________________________             
             else:
