@@ -236,7 +236,7 @@ def client_handler(address, fd, events):
                 
                 #bind the dpid and type  (type,  dpid)
 
-                Type = msg.msg.OFPC_OTN_SWITCH*4 +msg.OFPC_WAVE_SWITCH*2 + msg.OFPC_IP_SWITCH
+                Type = msg.OFPC_OTN_SWITCH*4 +msg.OFPC_WAVE_SWITCH*2 + msg.OFPC_IP_SWITCH
                 
                 sock_dpid[fd]=[Type, msg.datapath_id]
                 

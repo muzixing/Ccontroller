@@ -125,12 +125,61 @@ def ofc2of(msg, buffer, dpid):
             #OTN: supp_sw_otn_gran->different map function ; bitmap->calculate vlan id
             #ODU0 = 0, ODU1 = 1 ...
             
-            # [port + id] --> [buffer_id + pkt_in_msg]  
-            buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-            del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
+            # [port + id] --> [buffer_id + pkt_in_msg]
+            if (msg.payload.payload.payload.in_port, msg.xid) not in buffer:
+                #Do not change the match and wildcards.
+                flow_mod = of.ofp_header(type=14,length=88,)/\
+                         /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                                                OFPFW_DL_VLAN_PCP=1,
+                                                OFPFW_NW_DST_MASK=0,
+                                                OFPFW_NW_SRC_MASK=0,
+                                                OFPFW_TP_DST=1,
+                                                OFPFW_TP_SRC=1,
+                                                OFPFW_NW_PROTO=1,
+                                                OFPFW_DL_TYPE=1,
+                                                OFPFW_DL_VLAN=1,
+                                                OFPFW_IN_PORT=1,
+                                                OFPFW_DL_DST=1,
+                                                OFPFW_DL_SRC=1)/\
+                                                 /of.ofp_match(in_port=msg.payload.payload.payload.in_port,
+                                                               #dl_src=pkt_parsed.src,
+                                                               #dl_dst=pkt_parsed.dst,
+                                                               #dl_type=pkt_parsed.type,
+                                                               #dl_vlan=pkt_parsed.payload.vlan,
+                                                               #nw_tos=pkt_parsed.payload.tos,
+                                                               #nw_proto=pkt_parsed.payload.proto,
+                                                               #nw_src=pkt_parsed.payload.src,
+                                                               #nw_dst=pkt_parsed.payload.dst,
+                                                               #tp_src = pkt_parsed.payload.payload.sport,
+                                                               #tp_dst = pkt_parsed.payload.payload.dport
+                                                               )\
+                                                 /of.ofp_flow_mod(cookie=0,
+                                                                  command=0,
+                                                                  idle_timeout=0,
+                                                                  hard_timeout=0,
+                                                                  buffer_id=0,#Does it work?
+                                                                  flags=1)
+                if msg.payload.payload.payload.nport_out:
+                    vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
+                    port = msg.payload.payload.payload.nport_out
+                    print "vid", vid
+                    flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                elif msg.payload.payload.payload.wport_out:
+                    vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
+                    port = msg.payload.payload.payload.wport_out
+                    print "vid", vid
+                    flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                else:
+                    flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                return flow_mod_msg 
+#________________________________________use the packet_in to send the flow________________________________________________________________________             
+            else:
+                buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
+                del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
+                pkt_parsed = pkt.payload.payload
 
             ################################   pkt_parsed is a Ethernet packet#######################
-            pkt_parsed = pkt.payload.payload
+            
             if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
 #__________________________________________TCP OR UDP OR SCTP________________________________________________________________________________________
                 if isinstance(pkt_parsed.payload.payload, of.TCP) or isinstance(pkt_parsed.payload.payload, of.UDP) or isinstance(pkt_parsed.payload.payload, of.SCTP) :
@@ -182,7 +231,7 @@ def ofc2of(msg, buffer, dpid):
                                                           OFPFW_DL_VLAN_PCP=1,
                                                           OFPFW_NW_DST_MASK=0,
                                                           OFPFW_NW_SRC_MASK=0,
-                                                          OFPFW_TP_DST=,
+                                                          OFPFW_TP_DST=1,
                                                           OFPFW_TP_SRC=1,
                                                           OFPFW_NW_PROTO=1,
                                                           OFPFW_DL_TYPE=1,
