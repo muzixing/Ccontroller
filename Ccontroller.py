@@ -39,7 +39,7 @@ def handle_connection(connection, address):
 def client_handler(address, fd, events):
     sock = fd_map[fd]
     if events & io_loop.READ:
-        data = sock.recv(16384)
+        data = sock.recv(1024)
         if data == '':
             print "connection dropped"
             io_loop.remove_handler(fd)
@@ -292,8 +292,8 @@ def new_sock(block):
 
 if __name__ == '__main__':
     sock = new_sock(0)
-    sock.bind(("", 6634))
-    sock.listen(6634)
+    sock.bind(("", 6633))
+    sock.listen(6633)
     
     io_loop = ioloop.IOLoop.instance()
     #callback = functools.partial(connection_ready, sock)

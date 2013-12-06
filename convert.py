@@ -148,18 +148,17 @@ def ofc2of(msg, buffer, dpid):
                                             hard_timeout=0,
                                             buffer_id=-1,
                                             flags=1)
+                port = msg.payload.payload.payload.payload.port
                 if msg.payload.payload.payload.nport_out:
                     vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
-                    port = msg.payload.payload.payload.nport_out
                     print "vid", vid
                     flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                 elif msg.payload.payload.payload.wport_out:
                     vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
-                    port = msg.payload.payload.payload.wport_out
                     print "vid", vid
                     flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                 else:
-                    flow_mod_msg = flow_mod/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                    flow_mod_msg = flow_mod/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                 return flow_mod_msg 
 #________________________________________use the packet_in to send the flow________________________________________________________________________             
             else:
@@ -205,14 +204,8 @@ def ofc2of(msg, buffer, dpid):
                                                     hard_timeout=30,
                                                     buffer_id=buffer_id,
                                                     flags=1)
-                        if msg.payload.payload.payload.nport_out:
-                            port = msg.payload.payload.payload.nport_out
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        elif msg.payload.payload.payload.wport_out:
-                            port = msg.payload.payload.payload.wport_out
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                        port = msg.payload.payload.payload.payload.port
+                        flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
@@ -244,18 +237,17 @@ def ofc2of(msg, buffer, dpid):
                                                     hard_timeout=30,
                                                     buffer_id=buffer_id,
                                                     flags=1)
+                        port = msg.payload.payload.payload.payload.port
                         if msg.payload.payload.payload.nport_out:
                             vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
-                            port = msg.payload.payload.payload.nport_out
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         elif msg.payload.payload.payload.wport_out:
                             vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
-                            port = msg.payload.payload.payload.wport_out
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         return flow_mod_msg
 #____________________________________The others packets____________________________________________________________________
                 else:
@@ -292,14 +284,8 @@ def ofc2of(msg, buffer, dpid):
                                                     hard_timeout=30,
                                                     buffer_id=buffer_id,
                                                     flags=1)
-                        if msg.payload.payload.payload.nport_out:
-                            port = msg.payload.payload.payload.nport_out
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        elif msg.payload.payload.payload.wport_out:
-                            port = msg.payload.payload.payload.wport_out
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
-                        else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                        port = msg.payload.payload.payload.payload.port
+                        flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         return flow_mod_msg
                     else:                                           
                         flow_mod_msg = of.ofp_header(type=14,length=88,)\
@@ -331,18 +317,17 @@ def ofc2of(msg, buffer, dpid):
                                                     hard_timeout=30,
                                                     buffer_id=buffer_id,
                                                     flags=1)
+                        port = msg.payload.payload.payload.payload.port
                         if msg.payload.payload.payload.nport_out:
                             vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
-                            port = msg.payload.payload.payload.nport_out
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         elif msg.payload.payload.payload.wport_out:
                             vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
-                            port = msg.payload.payload.payload.wport_out
                             print "vid", vid
                             flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                         else:
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=0xfffb, len=8)
+                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
                         return flow_mod_msg
     
 #_____________________________________________________ The rule of converting_____________________________________________________                          
@@ -360,7 +345,7 @@ ofc2of_dict_odu = { 0: lambda x:x+2000,
 ofc2of_dict_wave = lambda x:x+3000
 
 
-# ________________________________The code below is just for test,and you have no need to read it._______________________________________________________
+# ________________________________The code below is just for test,and you have no need to read it._________________________________
 if __name__ == "__main__":
     # this convert (can) only match in-coming port and vlan
     

@@ -71,8 +71,9 @@ class switch():
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
+                    ofp_action_output= ofc.ofp_action_output(data[92:])
 
-                    msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect  
+                    msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect/ofp_action_output
                     data = convert.ofc2of(msg, self.buffer, self.dpid) 
                     self.flow_cache.append([time.time(),data])
 
@@ -96,9 +97,9 @@ class switch():
                             data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofc.ofp_flow_wildcards()/ofp_flow_match/ofp_flow_stats_request
                             print "send a stats request" 
                             #we try to delete the flow by this code.
-                            #data = of.ofp_header(type=14,length=88)/ofp_flow_wildcards/ofp_flow_match/of.ofp_flow_mod(command=3,flags=1)
+                            data = of.ofp_header(type=14,length=88)/ofp_flow_wildcards/ofp_flow_match/of.ofp_flow_mod(command=3,flags=1)
                             #print 'delete matching flow'
-                            
+
                             io_loop.update_handler(self.fd_sw, io_loop.WRITE)
                             self.queue_sw.put(str(data))#put it into the queue of packet which need to send to Switch.  
                     elif ofp_stats_request.type == 0:
@@ -140,7 +141,7 @@ class switch():
 
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
-            data = self.sock_sw.recv(16384)
+            data = self.sock_sw.recv(1024)
             if data == '':
                 print "switch disconnected"
                 io_loop.remove_handler(self.fd_sw)
@@ -230,7 +231,7 @@ def agent(sock, fd, events):
     #no idea why, but when not blocking, it says: error: [Errno 36] Operation now in progress
     sock_control = new_sock(1)
     try:
-        sock_control.connect((controllerIP,6634))
+        sock_control.connect((controllerIP,controllerPort))
     except socket.error, e:
         if e.args[0] not in (errno.ECONNREFUSED, errno.EINPROGRESS):
             raise
@@ -273,10 +274,11 @@ if __name__ == '__main__':
     in Tornado. And Tornado will execute the callback function ``agent()``.
     """
     sock = new_sock(0)
-    sock.bind(("", 6633))
-    sock.listen(6633)
+    sock.bind(("", 6634))
+    sock.listen(6634)
     num = 0
     controllerIP = "192.168.0.61"
+    controllerPort = 6633
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()
