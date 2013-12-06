@@ -97,7 +97,7 @@ class switch():
                             data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofc.ofp_flow_wildcards()/ofp_flow_match/ofp_flow_stats_request
                             print "send a stats request" 
                             #we try to delete the flow by this code.
-                            data = of.ofp_header(type=14,length=88)/ofp_flow_wildcards/ofp_flow_match/of.ofp_flow_mod(command=3,flags=1)
+                            #data = of.ofp_header(type=14,length=88)/ofp_flow_wildcards/ofp_flow_match/of.ofp_flow_mod(command=3,flags=1)
                             #print 'delete matching flow'
 
                             io_loop.update_handler(self.fd_sw, io_loop.WRITE)
@@ -274,11 +274,11 @@ if __name__ == '__main__':
     in Tornado. And Tornado will execute the callback function ``agent()``.
     """
     sock = new_sock(0)
-    sock.bind(("", 6634))
-    sock.listen(6634)
+    sock.bind(("", 6633))
+    sock.listen(6633)
     num = 0
-    controllerIP = "192.168.0.61"
-    controllerPort = 6633
+    controllerIP = "192.168.0.2"
+    controllerPort = 6635
     io_loop = ioloop.IOLoop.instance()
     callback = functools.partial(agent, sock)
     print sock, sock.getsockname()

@@ -246,8 +246,6 @@ def client_handler(address, fd, events):
                 for i in range(len(port_info_raw)/72):
                     port_info[i] = of.ofp_phy_cport(port_info_raw[i*72:72+i*72])
                     print "port_no:",port_info[i].port_no,"i:",i
-
-
     global count
     if ready and count % period == 0:  
         print "send stats_requests"
@@ -292,8 +290,8 @@ def new_sock(block):
 
 if __name__ == '__main__':
     sock = new_sock(0)
-    sock.bind(("", 6633))
-    sock.listen(6633)
+    sock.bind(("", 6635))
+    sock.listen(6635)
     
     io_loop = ioloop.IOLoop.instance()
     #callback = functools.partial(connection_ready, sock)
