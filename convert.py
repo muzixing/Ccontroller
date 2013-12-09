@@ -368,7 +368,8 @@ def ofc2of(msg, buffer, dpid):
 
 buffer_id = {}
 
-sup2odu = { 1:0,  #"ODU0"   #use for convert by port info
+sup2odu = { 0:0
+            1:0,  #"ODU0"   #use for convert by port info
             2:1,  #"ODU1"
             4:2,  #"ODU2"
             16:3  #"ODU3"
