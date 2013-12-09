@@ -19,7 +19,7 @@ sw_type = {	1:[1,0,1],
 #######################################
 #		features[sw_no][port_no][]
 #		features[0,	 	 1,    2,   3,    4,    5,   6,    7,   8,    9,      10,              11,                        12,                13,                 14    ]   
-#				[FIBER,  WAVE, OTN, SDH, SONET, ETH, VLAN, MPLS, IP, TCP/UDP, SUPP_SW_GRAM, sup_sdh_port_bandwidth, sup_otn_port_bandwidth, peer_port_no,  peer_datapath_id]
+#				[FIBER,  WAVE, OTN, SDH, SONET, ETH, VLAN, MPLS, IP, TCP/UDP, SUPP_SW_GRAN, sup_sdh_port_bandwidth, sup_otn_port_bandwidth, peer_port_no,  peer_datapath_id]
 #######################################
 
 features = {      # 0,1,2,3,4,5,6,7,8,9,10

@@ -23,16 +23,19 @@ ofp_match_obj = of.ofp_match()
 ready = 0
 period = MySetting.period
 count = 1
+
+features_info = {} 
+
 # dpid->type    
 switch_info = {0:"ip", 1:"ip", 2:"wave", 3:"wave+ip",   4:"otn", 5:"otn+ip", 6:"otn+wave", 7: "wave+otn+ip"} # 1 otn; 2 otn->wave; 3 wave
 
-# port->grain+slot(otn)/wave length(wave)
+# port->grain+slot(otn)/wave length(wave)   no use!!
 host_info = {           #odu0      #odu1    #odu2
                 "otn":{1:(0,64), 2:(1,22), 3:(2,6), 4:(2,5)},
                 "otn+ip":{1:(0,64), 2:(1,22), 3:(2,6), 4:(2,5)},
                 "wave":{1:96, 2:95, 3:94}
             }
-                
+######################################################################################################################                
 def handle_connection(connection, address):
         print "1 connection,", connection, address
 
@@ -79,17 +82,20 @@ def client_handler(address, fd, events):
                 print "OFPT_FEATURES_REQUEST"
             elif rmsg.type == 6:
                 print "OFPT_FEATURES_REPLY"
-                msg = of.ofp_features_reply(body[0:24])                   #length of reply msg
-                sock_dpid[fd]=[0, msg.datapath_id]                        #sock_dpid[fd] comes from here.
+                msg = of.ofp_features_reply(body[0:24])                     #length of reply msg
+                sock_dpid[fd]=[0, msg.datapath_id]                          #sock_dpid[fd] comes from here.
                 global ready
-                ready = 1                                                 #change the flag
+                ready = 1                                                   #change the flag
 
-                port_info_raw = str(body[24:])                            #we change it into str so we can manipulate it.
+                port_info_raw = str(body[24:])                              #we change it into str so we can manipulate it.
                 port_info = {}
                 print "port number:",len(port_info_raw)/48, "total length:", len(port_info_raw)
                 for i in range(len(port_info_raw)/48):
-                    port_info[i] = of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
-                    print port_info[i].port_no   
+                    port= of.ofp_phy_port(port_info_raw[0+i*48:48+i*48])
+                    print port.port_no
+                    port_info[port.port_no]= port                           #save port_info by port_no
+
+                features_info[msg.datapath_id] =(msg, port_info)            #features_info[dpid] = (sw_features, port_info{})
             elif rmsg.type == 10:
                 pkt_in_msg = of.ofp_packet_in(body)
                 raw = pkt_in_msg.load
@@ -107,7 +113,7 @@ def client_handler(address, fd, events):
                     
                     io_loop.update_handler(fd, io_loop.WRITE)
                     message_queue_map[sock].put(str(pkt_out_))
-                if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):   #sometimes, you need to send the flow_mod.
+                if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
                     cflow_mod = of.ofp_header(type=0xff, xid=rmsg.xid)\
                                     /of.ofp_cflow_mod(command=0)\
                                     /of.ofp_connect_wildcards()\
@@ -117,22 +123,20 @@ def client_handler(address, fd, events):
                     type=switch_info[sock_dpid[fd][0]]
                     
                     if type == "otn":
-                        grain=host_info[type][pkt_in_msg.in_port]
-                        cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
-                        cflow_mod.payload.payload.payload.nport_out = 0xfffb
-                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
-                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
+                        cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port     #we need to add the in slot
+                        cflow_mod.payload.payload.payload.nport_out = 0xfffb                #we need to add the out slot
+                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].SUPP_SW_GRAN##change the in_port to out_port
+                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].sup_otn_port_bandwidth
                     elif type == "otn+ip":
-                        grain=host_info[type][pkt_in_msg.in_port]
                         cflow_mod.payload.payload.payload.nport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.nport_out = 0xfffb
-                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
-                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
+                        cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].SUPP_SW_GRAN
+                        cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].sup_otn_port_bandwidth
                     elif type == "wave":
-                        grain=host_info[type][pkt_in_msg.in_port] 
                         cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.wport_out = 0xfffb
-                        cflow_mod.payload.payload.payload.num_wave_out = grain
+                        cflow_mod.payload.payload.payload.center_freq_lmda_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].payload.center_freq_lmda_out
+                        cflow_mod.payload.payload.payload.num_wave_out = features_info[sock_dpid[fd][1]][1][pkt_in_msg.in_port].payload.num_wave_out
 
                     message_queue_map[sock].put(str(cflow_mod))
                     io_loop.update_handler(fd, io_loop.WRITE)
