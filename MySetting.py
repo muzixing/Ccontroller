@@ -5,7 +5,7 @@
         #  otn wave ip
         #   ||  ||	||
         # " 0   0"  "0"
-        """[0,0,1/0]=IP ,[1,0,0]=OTN, [0,1,0] = WAVE, [1,1,1] = OTN & WAVE& IP """
+"""[0,0,1/0]=IP ,[1,0,0]=OTN, [0,1,0] = WAVE, [1,1,1] = OTN & WAVE& IP """
 #######################################
 #the count of sending stats_request
 period = 25

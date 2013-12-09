@@ -111,7 +111,7 @@ ofp_bad_action_code = { 0: "OFPBAC_BAD_TYPE",
                         3: "OFPBAC_BAD_VENDOR_TYPE",
                         4: "OFPBAC_BAD_OUT_PORT",
                         6: "OFPBAC_BAD_ARGUMENT",
-                        7: "OFPBAC_EPERM", #permissions error
+                        7: "OFPBAC_EPERM",                  #permissions error
                         8: "OFPBAC_TOOMANY",
                         9: "OFPBAC_BAD_QUEUE"}
 

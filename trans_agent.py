@@ -49,6 +49,7 @@ class switch():
         self.queue_con  = Queue.Queue()
         self.queue_sw   = Queue.Queue()
         self.buffer     = {}
+        self.counter    = 0
         self.dpid       = 0
         self.flow_cache = []#use for save the flow
         
@@ -73,7 +74,9 @@ class switch():
                     ofp_action_output= ofc.ofp_action_output(data[92:])
 
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect/ofp_action_output
+                    #msg.show()
                     data = convert.ofc2of(msg, self.buffer, self.dpid) 
+                    data.show()
                     self.flow_cache.append([time.time(),data])
 
                 elif rmsg.type == 14:
@@ -161,10 +164,13 @@ class switch():
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
                     pkt_parsed = of.Ether(data[18:])
+                    self.counter+=1
                     #[port + id+ dpid] --> [buffer_id + pkt_in_msg]
                     if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                        self.buffer[(pkt_in_msg.in_port, rmsg.xid, self.dpid)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
+                        self.buffer[(pkt_in_msg.in_port, self.counter, self.dpid)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
+                    rmsg.xid = self.counter                 # use the counter to check the buffer
                     data = rmsg/pkt_in_msg/pkt_parsed
+
                 elif rmsg.type ==11:
                     match = ofc.ofp_match(data[12:48])                  #data[8:12]is wildcards
                     for flow in  self.flow_cache:
