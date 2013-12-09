@@ -129,7 +129,7 @@ def client_handler(address, fd, events):
                         cflow_mod.payload.payload.payload.supp_sw_otn_gran_out = grain[1]
                         cflow_mod.payload.payload.payload.sup_otn_port_bandwidth_out = grain[0]
                     elif type == "wave":
-                        grain=host_info[type][pkt_in_msg.in_port]
+                        grain=host_info[type][pkt_in_msg.in_port] 
                         cflow_mod.payload.payload.payload.wport_in = pkt_in_msg.in_port
                         cflow_mod.payload.payload.payload.wport_out = 0xfffb
                         cflow_mod.payload.payload.payload.num_wave_out = grain
@@ -254,7 +254,7 @@ def client_handler(address, fd, events):
         io_loop.update_handler(fd, io_loop.WRITE)
         count = 1
     count+=1
-                #------------------------------------------------------We finish the actions of manipulateing________________________
+#############################################   We finish the actions of manipulateing  #####################################
 
     if events & io_loop.WRITE:
         try:

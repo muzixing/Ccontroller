@@ -20,7 +20,7 @@ class  MyPort():
 		self.port_no = port_no
 		if port_no not in self.f[sw_no]:
 			port_no = 65534   #default
-#______________port_info________________________
+#####################port_info##########################
 		self.OFPST_FIBER = f[sw_no][port_no][0]     
 		self.OFPST_WAVE = f[sw_no][port_no][1]      
 		self.OFPST_T_OTN = f[sw_no][port_no][2]     
@@ -37,15 +37,15 @@ class  MyPort():
 		self.peer_port_no = f[sw_no][port_no][13]
 		self.peer_datapath_id = f[sw_no][port_no][14]
 
-#________________wave sw________________________
+#######################wave sw##########################
 		self.center_freq_lmda = wave[sw_no][port_no][0]
 		self.num_lmda = wave[sw_no][port_no][1]
 		self.freq_space_lmda = wave[sw_no][port_no][2]
-#_________________________________________________________
+########################################################
 def creat_port(sw_no, port_no):
 	return MyPort(M.features, M.f_wave, sw_no, port_no)
 def creat_sw(sw_no):
 	return sw(M.sw_type, sw_no)
-#_________________________________________________________
+########################################################
 if __name__ == '__main__':
 	pass

@@ -49,7 +49,6 @@ class switch():
         self.queue_con  = Queue.Queue()
         self.queue_sw   = Queue.Queue()
         self.buffer     = {}
-        self.counter    = 0
         self.dpid       = 0
         self.flow_cache = []#use for save the flow
         
@@ -77,10 +76,8 @@ class switch():
                     data = convert.ofc2of(msg, self.buffer, self.dpid) 
                     self.flow_cache.append([time.time(),data])
 
-                    print "flow_mod_msg xid:", header.xid 
                 elif rmsg.type == 14:
                     print "send flow_mod"
-
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
                 elif rmsg.type == 16:
                     header = ofc.ofp_header(data[0:8])
@@ -133,12 +130,12 @@ class switch():
                 io_loop.update_handler(self.fd_con, io_loop.READ)
             else:
                 self.sock_con.send(next_msg)
-#____________delete the flow cache by hard_timeout_____________________
+#####################delete the flow cache by hard_timeout###################
         for f in self.flow_cache:
             if fresh(f):
                 self.flow_cache.remove(f)
                 print "remove a flow_cache by hard_timeout"
-
+#######################################################################
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
             data = self.sock_sw.recv(1024)
@@ -158,18 +155,15 @@ class switch():
                     msg = of.ofp_features_reply(data[8:32])     #all sw type should make the convertion. Because our protocol need to use in all nets.
                     msg_port = data[32:]
                     msg = header/msg/msg_port                     
-                    self.dpid=msg.datapath_id
+                    self.dpid=msg.datapath_id       #record the dpid
 
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
                     pkt_parsed = of.Ether(data[18:])
-                    #[port + id] --> [buffer_id + pkt_in_msg]
-                    self.counter+=1
+                    #[port + id+ dpid] --> [buffer_id + pkt_in_msg]
                     if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-                        self.buffer[(pkt_in_msg.in_port, self.counter)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
-                    #change the xid in header, so that the agent can track the packet/buffer_id more precisely
-                    rmsg.xid = self.counter
+                        self.buffer[(pkt_in_msg.in_port, rmsg.xid, self.dpid)] = [pkt_in_msg.buffer_id, rmsg/pkt_in_msg/pkt_parsed] # bind buffer id with in port 
                     data = rmsg/pkt_in_msg/pkt_parsed
                 elif rmsg.type ==11:
                     match = ofc.ofp_match(data[12:48])                  #data[8:12]is wildcards

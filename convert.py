@@ -8,7 +8,7 @@ import functools
 import Queue
 import setting 
 
-#_________________________________________________________of2ofc() uses for coverting the of packets to ofc's________________________________________
+#####################################of2ofc() uses for coverting the of packets to ofc's################################
 
 def of2ofc(msg, buffer, dpid):
     print "of->ofc converting"
@@ -111,7 +111,7 @@ def of2ofc(msg, buffer, dpid):
             cfeatures_reply = ofc.ofp_header(type = 24, length =port_num*74+32,)/cfeatures_reply
             return cfeatures_reply 
 
-#_________________________________________________________ofc2of() uses for coverting the ofc packets to of's________________________________________
+######################################ofc2of() uses for coverting the ofc packets to of's#########################################
 
 
 def ofc2of(msg, buffer, dpid):
@@ -126,11 +126,11 @@ def ofc2of(msg, buffer, dpid):
             #ODU0 = 0, ODU1 = 1 ...
             
             # [port + id] --> [buffer_id + pkt_in_msg]
-            if (msg.payload.payload.payload.in_port, msg.xid) not in buffer:
+            if (msg.payload.payload.payload.in_port, msg.xid, dpid) not in buffer:
                 #Do not change the match and wildcards.
                 print "not in the buffer"
-                flow_mod = of.ofp_header(type=14,length=88,)\
-                           /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
+                flow_mod = of.ofp_header(type=14,length=88,xid=msg.xid)\
+                           /of.ofp_flow_wildcard s(OFPFW_NW_TOS=1,
                                                   OFPFW_DL_VLAN_PCP=1,
                                                   OFPFW_NW_DST_MASK=0,
                                                   OFPFW_NW_SRC_MASK=0,
@@ -147,6 +147,7 @@ def ofc2of(msg, buffer, dpid):
                                             command=0,
                                             idle_timeout=0,
                                             hard_timeout=0,
+                                            out_port=msg.payload.payload.payload.payload.port,
                                             buffer_id=-1,
                                             flags=1)
                 port = msg.payload.payload.payload.payload.port
@@ -159,23 +160,23 @@ def ofc2of(msg, buffer, dpid):
                     print "vid", vid
                     flow_mod_msg = flow_mod/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                 else:
-                    flow_mod_msg = flow_mod/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                    flow_mod_msg = flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)
                 return flow_mod_msg 
-#________________________________________use the packet_in to send the flow________________________________________________________________________             
+###############################################use the packet_in to send the flow##############################################
             else:
-                buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid)]
-                del buffer[(msg.payload.payload.payload.in_port, msg.xid)]
+                buffer_id, pkt = buffer[(msg.payload.payload.payload.in_port, msg.xid, dpid)]
+                del buffer[(msg.payload.payload.payload.in_port, msg.xid, dpid)]
                 pkt_parsed = pkt.payload.payload
 
-            ################################   pkt_parsed is a Ethernet packet#######################
+#####################################################pkt_parsed is a Ethernet packet############################################
             
                 if isinstance(pkt_parsed.payload, of.IP) or isinstance(pkt_parsed.payload.payload, of.IP):
-#__________________________________________TCP OR UDP OR SCTP______________________________________________________________________________________
+########################################################TCP OR UDP OR SCTP(L4)##################################################
                     if isinstance(pkt_parsed.payload.payload, of.TCP) or isinstance(pkt_parsed.payload.payload, of.UDP) or isinstance(pkt_parsed.payload.payload, of.SCTP) :
                         print "it is TCP or UDP or SCTP packet"
                         if  pkt_parsed.type ==0x8100:
                             print "pkt_parsed.payload.vlan",pkt_parsed.payload.vlan
-                            flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                            flow_mod_msg = of.ofp_header(type=14,length=88,xid =msg.xid)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
                                                               OFPFW_DL_VLAN_PCP=1,
                                                               OFPFW_NW_DST_MASK=0,
@@ -203,13 +204,23 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=10,
                                                         hard_timeout=30,
+                                                        out_port=msg.payload.payload.payload.payload.port,
                                                         buffer_id=buffer_id,
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)#we dont't need to strip vlan
+                            if msg.payload.payload.payload.nport_out:
+                                vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
+                                print "vid", vid
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                            elif msg.payload.payload.payload.wport_out:
+                                vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
+                                print "vid", vid
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                            else:
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)
                             return flow_mod_msg
                         else:                                           
-                            flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                            flow_mod_msg = of.ofp_header(type=14,length=88,xid=msg.xid)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
                                                               OFPFW_DL_VLAN_PCP=1,
                                                               OFPFW_NW_DST_MASK=0,
@@ -236,6 +247,7 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=10,
                                                         hard_timeout=30,
+                                                        out_port=msg.payload.payload.payload.payload.port,
                                                         buffer_id=buffer_id,
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
@@ -248,14 +260,14 @@ def ofc2of(msg, buffer, dpid):
                                 print "vid", vid
                                 flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                             else:
-                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)
                             return flow_mod_msg
-    #____________________________________The others packets____________________________________________________________________
+#######################################################IP(L3)##########################################################################
                     else:
-                        print "it is just a IP packet "
                         if  pkt_parsed.type ==0x8100:
+                            print "it is just a IP packet "
                             print "pkt_parsed.payload.vlan",pkt_parsed.payload.vlan
-                            flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                            flow_mod_msg = of.ofp_header(type=14,length=88,xid=msg.xid)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
                                                               OFPFW_DL_VLAN_PCP=1,
                                                               OFPFW_NW_DST_MASK=0,
@@ -283,13 +295,23 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=10,
                                                         hard_timeout=30,
+                                                        out_port=msg.payload.payload.payload.payload.port,
                                                         buffer_id=buffer_id,
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
-                            flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                            if msg.payload.payload.payload.nport_out:
+                                vid =  ofc2of_dict_odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out](msg.payload.payload.payload.supp_sw_otn_gran_out)
+                                print "vid", vid
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                            elif msg.payload.payload.payload.wport_out:
+                                vid =  ofc2of_dict_wave(msg.payload.payload.payload.num_wave_out)
+                                print "vid", vid
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
+                            else:
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)
                             return flow_mod_msg
                         else:                                           
-                            flow_mod_msg = of.ofp_header(type=14,length=88,)\
+                            flow_mod_msg = of.ofp_header(type=14,length=88,xid=msg.xid)\
                                        /of.ofp_flow_wildcards(OFPFW_NW_TOS=1,
                                                               OFPFW_DL_VLAN_PCP=1,
                                                               OFPFW_NW_DST_MASK=0,
@@ -316,6 +338,7 @@ def ofc2of(msg, buffer, dpid):
                                                         command=0,
                                                         idle_timeout=10,
                                                         hard_timeout=30,
+                                                        out_port=msg.payload.payload.payload.payload.port,
                                                         buffer_id=buffer_id,
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
@@ -328,10 +351,10 @@ def ofc2of(msg, buffer, dpid):
                                 print "vid", vid
                                 flow_mod_msg = flow_mod_msg/of.ofp_action_vlan_vid(vlan_vid = vid)/of.ofp_action_output(type=0, port=port, len=8)
                             else:
-                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=3)/of.ofp_action_output(type=0, port=port, len=8)
+                                flow_mod_msg = flow_mod_msg/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)
                             return flow_mod_msg
     
-#_____________________________________________________ The rule of converting_____________________________________________________                          
+##################################################### The rule of converting######################################################
 
 buffer_id = {}
 
@@ -346,7 +369,9 @@ ofc2of_dict_odu = { 0: lambda x:x+2000,
 ofc2of_dict_wave = lambda x:x+3000
 
 
-# ________________________________The code below is just for test,and you have no need to read it._________________________________
+##################################The code below is just for test,and you have no need to read it.#################################
+
+
 if __name__ == "__main__":
     # this convert (can) only match in-coming port and vlan
     

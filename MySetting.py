@@ -1,13 +1,14 @@
-#_______________________________________you can set the switch and port information here_______________
+"""you can set the switch and port information in this file"""
+
 #######################################
         #sw_type[sw_no][]
         #  otn wave ip
         #   ||  ||	||
         # " 0   0"  "0"
-        #[0,0,1/0]=IP ,[1,0,0]=OTN, [0,1,0] = WAVE, [1,1,1] = OTN & WAVE& IP 
+        """[0,0,1/0]=IP ,[1,0,0]=OTN, [0,1,0] = WAVE, [1,1,1] = OTN & WAVE& IP """
 #######################################
 #the count of sending stats_request
-period = 15
+period = 25
 
 sw_type = {	1:[1,0,1],
 			2:[0,0,1],
@@ -18,7 +19,7 @@ sw_type = {	1:[1,0,1],
 #######################################
 #		features[sw_no][port_no][]
 #		features[0,	 	 1,    2,   3,    4,    5,   6,    7,   8,    9,      10,              11,                        12,                13,                 14    ]   
-#		 [		FIBER,  WAVE, OTN, SDH, SONET, ETH, VLAN, MPLS, IP, TCP/UDP, SUPP_SW_GRAM, sup_sdh_port_bandwidth, sup_otn_port_bandwidth, peer_port_no,  peer_datapath_id]
+#				[FIBER,  WAVE, OTN, SDH, SONET, ETH, VLAN, MPLS, IP, TCP/UDP, SUPP_SW_GRAM, sup_sdh_port_bandwidth, sup_otn_port_bandwidth, peer_port_no,  peer_datapath_id]
 #######################################
 
 features = {      # 0,1,2,3,4,5,6,7,8,9,10
@@ -78,7 +79,7 @@ f_wave = {
 				4:[0,0,0],
 				65534:[0,0,0]}
 		} 
-#_______________________________________________________________________________________________________
+#######################################
 
 if __name__ == '__main__':
 	print features[1][1][0]
