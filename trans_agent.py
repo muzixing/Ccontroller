@@ -67,35 +67,43 @@ class switch():
                 # Here, we can manipulate OpenFlow packets from CONTROLLER.
                 if rmsg.type == 0xff:                           #cflow_mod   
                     header = ofc.ofp_header(data[0:8])
-                    print "ofc_xid = ", header.xid
+                    
                     cflow_mod = ofc.ofp_cflow_mod(data[8:16])
                     cflow_connect_wildcards = ofc.ofp_connect_wildcards(data[16:18])
                     cflow_connect = ofc.ofp_connect(data[18:92])
                     ofp_action_output= ofc.ofp_action_output(data[92:])
 
                     msg = header/cflow_mod/cflow_connect_wildcards/cflow_connect/ofp_action_output
-                    #msg.show()
+                    msg.show()
                     data = convert.ofc2of(msg, self.buffer, self.dpid) 
-                    data.show()
+                    
                     self.flow_cache.append([time.time(),data])
 
                 elif rmsg.type == 14:
                     print "send flow_mod"
+                    header = of.ofp_header(data[0:8])
+                    wildcards=of.ofp_flow_wildcards(data[8:12])
+                    match=of.ofp_match(data[12:48])
+                    flow_mod =of.ofp_flow_mod(data[48:72])
+                    action_header = of.ofp_action_header(data[72:80])
+                    action_output =of.ofp_action_output(data[80:88])
+                    data1 =header/wildcards/match/flow_mod/action_header/action_output
+                    self.flow_cache.append([time.time(),data1])
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
-                elif rmsg.type == 16:
+                elif rmsg.type == 16 and 0: #do nothing and send it .
                     header = ofc.ofp_header(data[0:8])
                     ofp_stats_request = ofc.ofp_stats_request(data[8:12])
                     if ofp_stats_request.type == 1:
                         ofp_flow_wildcards = ofc.ofp_flow_wildcards(data[12:16])
                         data_match = ofc.ofp_match(data[16:52])
                         ofp_flow_stats_request = ofc.ofp_flow_stats_request(data[52:56])
-                        print "look at the number:", len(self.flow_cache)
                         for f in self.flow_cache:
                             flow = str(f[1])
                             ofp_flow_wildcards = ofc.ofp_flow_wildcards(flow[8:12])
                             ofp_flow_match = ofc.ofp_match(flow[12:48])
-                            data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofc.ofp_flow_wildcards()/ofp_flow_match/ofp_flow_stats_request
-                            print "send a stats request" 
+                            ofp_flow_stats_request.out_put = of.ofp_action_output(flow[80:88]).port
+                            data = ofc.ofp_header(type = 16, length = 56)/ofp_stats_request/ofp_flow_wildcards/ofp_flow_match/ofp_flow_stats_request
+
                             #we try to delete the flow by this code.
                             #data = of.ofp_header(type=14,length=88)/ofp_flow_wildcards/ofp_flow_match/of.ofp_flow_mod(command=3,flags=1)
                             #print 'delete matching flow'
@@ -137,7 +145,6 @@ class switch():
         for f in self.flow_cache:
             if fresh(f):
                 self.flow_cache.remove(f)
-                print "remove a flow_cache by hard_timeout"
 #######################################################################
     def switch_handler(self, address, fd, events):
         if events & io_loop.READ:
@@ -176,7 +183,6 @@ class switch():
                     for flow in  self.flow_cache:
                         if match == ofc.ofp_match(str(flow[1])[12:48]):
                             self.flow_cache.remove(flow)                #delete the flow
-                            print "remove a old flow"    
                 elif rmsg.type == 17:
                     print "stats_reply" ,len(data)
                     body = data[8:]
@@ -188,7 +194,6 @@ class switch():
                             for flow in  self.flow_cache: 
                                 if reply_body_match == ofc.ofp_match(str(flow[1])[12:48]):
                                     self.flow_cache.remove(flow)    
-                                    print "remove a junck flow " 
                 io_loop.update_handler(self.fd_con, io_loop.WRITE)
                 self.queue_con.put(str(data))
     

@@ -38,7 +38,6 @@ host_info = {           #odu0      #odu1    #odu2
 ######################################################################################################################                
 def handle_connection(connection, address):
         print "1 connection,", connection, address
-
 def client_handler(address, fd, events):
     sock = fd_map[fd]
     if events & io_loop.READ:
@@ -64,8 +63,6 @@ def client_handler(address, fd, events):
             elif rmsg.type == 1:
                 print "OFPT_ERROR"
                 of.ofp_error_msg(body).show()
-  
-
             elif rmsg.type == 2:
                 print "OFPT_ECHO_REQUEST"
                 msg = of.ofp_header(type=3, xid=rmsg.xid)
@@ -77,7 +74,7 @@ def client_handler(address, fd, events):
             elif rmsg.type == 3:
                 print "OFPT_ECHO_REPLY"
             elif rmsg.type == 4:
-                print "OFPT_VENDOR" #USE FOR WHAT?
+                print "OFPT_VENDOR"
             elif rmsg.type == 5:
                 print "OFPT_FEATURES_REQUEST"
             elif rmsg.type == 6:
@@ -253,7 +250,6 @@ def client_handler(address, fd, events):
     global count
     if ready and count % period == 0:  
         print "send stats_requests"
-        #request the stats per 3 seconds
         message_queue_map[sock].put(str(stats.send(1)))  #the parameter is the type of stats request
         io_loop.update_handler(fd, io_loop.WRITE)
         count = 1

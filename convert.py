@@ -30,7 +30,7 @@ def of2ofc(msg, buffer, dpid):
             #basic structure:0fc.ofp_header()/ofc.ofp_cfeatures_reply()/ofc.ofp_phy_cport()/sup_wave_port_bandwidth()[n] 
             pkt_parsed = msg.payload                        #feature_reply
             port_info = msg.payload.payload
-            print "pkt_parsed.datapath_id:",pkt_parsed.datapath_id
+            
             port_raw=str(port_info)
             port_num = len(port_raw)/48  
 
@@ -147,11 +147,11 @@ def ofc2of(msg, buffer, dpid):
                                             idle_timeout=0,
                                             hard_timeout=0,
                                             out_port=msg.payload.payload.payload.payload.port,
-                                            buffer_id=-1,
+                                            buffer_id=0xffff,
                                             flags=1)
                 port = msg.payload.payload.payload.payload.port
                 if msg.payload.payload.payload.nport_out:
-                    odu = sup2odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out]
+                    odu = sup2odu[msg.payload.payload.payload.supp_sw_otn_gran_out]
                     vid =  ofc2of_dict_odu[odu](msg.payload.payload.payload.nport_out)
                     print "vid", vid
                     flow_mod_msg = of.ofp_header(type=14,length=104,xid=msg.xid)/flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)/of.ofp_action_header(type =1)/of.ofp_action_vlan_vid(vlan_vid = vid)
@@ -210,7 +210,7 @@ def ofc2of(msg, buffer, dpid):
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
                             if msg.payload.payload.payload.nport_out:
-                                odu = sup2odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out]
+                                odu = sup2odu[msg.payload.payload.payload.supp_sw_otn_gran_out]
                                 vid =  ofc2of_dict_odu[odu](msg.payload.payload.payload.nport_out)
                                 print "vid", vid
                                 flow_mod_msg = of.ofp_header(type=14,length=104,xid=pkt.xid)/flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)/of.ofp_action_header(type =1)/of.ofp_action_vlan_vid(vlan_vid = vid)
@@ -255,7 +255,7 @@ def ofc2of(msg, buffer, dpid):
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
                             if msg.payload.payload.payload.nport_out:
-                                odu = sup2odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out]
+                                odu = sup2odu[msg.payload.payload.payload.supp_sw_otn_gran_out]
                                 vid =  ofc2of_dict_odu[odu](msg.payload.payload.payload.nport_out)
                                 print "vid", vid
                                 flow_mod_msg = of.ofp_header(type=14,length=104,xid=pkt.xid)/flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)/of.ofp_action_header(type =1)/of.ofp_action_vlan_vid(vlan_vid = vid)
@@ -305,7 +305,7 @@ def ofc2of(msg, buffer, dpid):
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
                             if msg.payload.payload.payload.nport_out:
-                                odu = sup2odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out]
+                                odu = sup2odu[msg.payload.payload.payload.supp_sw_otn_gran_out]
                                 vid =  ofc2of_dict_odu[odu](msg.payload.payload.payload.nport_out)
                                 print "vid", vid
                                 flow_mod_msg = of.ofp_header(type=14,length=104,xid=pkt.xid)/flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)/of.ofp_action_header(type =1)/of.ofp_action_vlan_vid(vlan_vid = vid)
@@ -350,7 +350,7 @@ def ofc2of(msg, buffer, dpid):
                                                         flags=1)
                             port = msg.payload.payload.payload.payload.port
                             if msg.payload.payload.payload.nport_out:
-                                odu = sup2odu[msg.payload.payload.payload.sup_otn_port_bandwidth_out]
+                                odu = sup2odu[msg.payload.payload.payload.supp_sw_otn_gran_out]
                                 vid =  ofc2of_dict_odu[odu](msg.payload.payload.payload.nport_out)
                                 print "vid", vid
                                 flow_mod_msg = of.ofp_header(type=14,length=104,xid=pkt.xid)/flow_mod/of.ofp_action_header(type=0)/of.ofp_action_output(type=0, port=port, len=8)/of.ofp_action_header(type =1)/of.ofp_action_vlan_vid(vlan_vid = vid)

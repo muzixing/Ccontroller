@@ -350,7 +350,7 @@ class ofp_action_header(Packet):
     name = "OpenFlow Action Header"
     fields_desc=[ ShortEnumField("type", 0, ofp_action_type),
                   ShortField("len", 0), #length of this action (including this header)
-                  XByteField("pad", 0)]
+                  BitField("pad", 0, 32)]
 
 
 
