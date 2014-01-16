@@ -81,14 +81,14 @@ class switch():
 
                 elif rmsg.type == 14:
                     print "send flow_mod"
-                    header = of.ofp_header(data[0:8])
-                    wildcards=of.ofp_flow_wildcards(data[8:12])
-                    match=of.ofp_match(data[12:48])
-                    flow_mod =of.ofp_flow_mod(data[48:72])
-                    action_header = of.ofp_action_header(data[72:80])
-                    action_output =of.ofp_action_output(data[80:88])
-                    data1 =header/wildcards/match/flow_mod/action_header/action_output
-                    self.flow_cache.append([time.time(),data1])
+                    #header = of.ofp_header(data[0:8])
+                    #wildcards=of.ofp_flow_wildcards(data[8:12])
+                    #match=of.ofp_match(data[12:48])
+                    #flow_mod =of.ofp_flow_mod(data[48:72])
+                    #action_header = of.ofp_action_header(data[72:80])
+                    #action_output =of.ofp_action_output(data[80:88])
+                    #data1 =header/wildcards/match/flow_mod/action_header/action_output
+                    #self.flow_cache.append([time.time(),data1])
                 #full message for flow status request: ofp_stats_rqeuest()/ofp_flow_wildcards()/ofp_match()/ofp_flow_stats_request()
                 elif rmsg.type == 16 and 0: #do nothing and send it .
                     header = ofc.ofp_header(data[0:8])
@@ -166,8 +166,8 @@ class switch():
                     msg_port = data[32:]
                     msg = header/msg/msg_port                     
                     self.dpid=msg.datapath_id       #record the dpid
-
                     data = convert.of2ofc(msg, self.buffer, self.dpid)   
+                    
                 elif rmsg.type == 10:
                     pkt_in_msg = of.ofp_packet_in(data[8:18])
                     pkt_parsed = of.Ether(data[18:])
@@ -222,7 +222,6 @@ def agent(sock, fd, events):
     #TODO: create a new class for switches. when a switch connected to agent, new class
     #also, the sw is connected to controller using another socket.
     #print fd, sock, events
-    
     #1. accept connection from switch
     try:
         connection, address = sock.accept()
@@ -244,7 +243,6 @@ def agent(sock, fd, events):
             print "cannot establish connection to controller, please check your config."
         return
     sock_control.setblocking(0)
-    
     #3. create sw class object
     global num
     num = num + 1
@@ -253,8 +251,6 @@ def agent(sock, fd, events):
     fdmap[connection.fileno()] = new_switch
     fdmap[sock_control.fileno()] = new_switch
     
-    #print_connection(connection, address)
-    #print_connection(sock_control, sock_control.getpeername())
     controller_handler = functools.partial(new_switch.controller_handler, address)
     io_loop.add_handler(sock_control.fileno(), controller_handler, io_loop.READ)
     print "agent: connected to controller"

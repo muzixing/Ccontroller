@@ -42,6 +42,10 @@ from random import shuffle
 log = core.getLogger()
 
 import tables
+
+global topo_flag
+topo_flag = tables.switch_number#indicate whether the topo-discovery is completed or not
+
 class LLDPSender (object):
   """
   Sends out discovery packets
@@ -204,7 +208,7 @@ class Discovery (object):
 
   _flow_priority = 65000     # Priority of LLDP-catching flow (if any)
   _link_timeout = 10         # How long until we consider a link dead
-  _timeout_check_period = 5  # How often to check for timeouts
+  _timeout_check_period = 10  # How often to check for timeouts
 
   Link = namedtuple("Link",("dpid1","port1","dpid2","port2"))
 
@@ -222,7 +226,7 @@ class Discovery (object):
     #core.listen_to_dependencies(self,
         #listen_args={'openflow':{'priority':0xffffffff}})
 
-    Timer(self._timeout_check_period, self._expire_links, recurring=True)
+    #Timer(self._timeout_check_period, self._expire_links, recurring=True)
 
   @property
   def send_cycle_time (self):
@@ -247,7 +251,7 @@ class Discovery (object):
     self._delete_links([link for link in self.adjacency
                         if link.dpid1 == dpid
                         or link.dpid2 == dpid])
-
+  '''
   def _expire_links (self):
     """
     Remove apparently dead links
@@ -263,12 +267,12 @@ class Discovery (object):
                   dpid_to_str(link.dpid2), link.port2))
 
       self._delete_links(expired)
-
+  '''
   def _handle_openflow_PacketIn (self, msg, packet, dpid):
     """
     Receive and process LLDP packets
     """
-
+    global topo_flag
     if (packet.effective_ethertype != pkt.ethernet.LLDP_TYPE
         or packet.dst != pkt.ETHERNET.NDP_MULTICAST):#there should be confirmed. use which filed of packet
       '''
@@ -396,7 +400,7 @@ class Discovery (object):
                 dpid_to_str(link.dpid2), link.port2))
       pairs = (link.dpid1, link.port1, link.dpid2, link.port2)
       pairs_ = (link.dpid2, link.port2, link.dpid1, link.port1)
-      #the type of the link must be unique,IP or OTN or WAVE(1,2,3)
+     
       if pairs_ not in tables.topo_map:
         tables.topo_map[pairs] = {'type':0, 'bandwidth':0, 'payload':0, 'status':0, "bit_map":b'0000000000'}
         dpid1 = pairs[0]
@@ -412,11 +416,13 @@ class Discovery (object):
             slot_n = int(tables.topo_map[pairs]['bandwidth']/1.25)
             #print "slot_n: %d" % slot_n
             tables.topo_map[pairs]["bit_map"] = b'0' * slot_n
-            tables.info_map[pairs] = {}
+            tables.info_map[dpid1][port1] = {}
+            tables.info_map[dpid2][port2] = {}
             for i in xrange(0, slot_n):
-              tables.info_map[pairs][i] = {'type':0, 'service':0, 'status':0} 
-          
-        #print tables.topo_map
+              tables.info_map[dpid1][port1][i] = {'type':0, 'service':0, 'status':0}
+              tables.info_map[dpid2][port2][i] = {'type':0, 'service':0, 'status':0}
+      topo_flag -= 1
+      #print tables.topo_map
 
     else:
       # Just update timestamp
@@ -427,8 +433,13 @@ class Discovery (object):
     return# Probably nobody else needs this event
 
   def _delete_links (self, links):
+    global topo_flag
     for link in links:
       del self.adjacency[link]
+      if topo_flag:
+        pair = (link.dpid1, link.port1, link.dpid2, link.port2)
+        if pair in tables.topo_map.iterkeys():
+          tables.topo_map.pop(pair)
 
   def is_edge_port (self, dpid, port):
     """
