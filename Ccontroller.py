@@ -250,7 +250,7 @@ def client_handler(address, fd, events):
     global count
     if ready and count % period == 0:  
         print "send stats_requests"
-        flow =of.ofp_header()/0f.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_mod()
+        flow =of.ofp_header()/of.ofp_flow_wildcards()/of.ofp_match()/of.ofp_flow_mod()
         message_queue_map[sock].put(str(stats.send(1,flow)))  #the parameter is the type of stats request
         io_loop.update_handler(fd, io_loop.WRITE)
         count = 1
