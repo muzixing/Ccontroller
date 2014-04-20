@@ -24,37 +24,44 @@ def checkIntf(intf):
 if __name__ == "__main__":
 	setLogLevel("info")
 	OVSKernelSwitch.setup()
-	intfName_1 = "eth2"
+	"""intfName_1 = "eth2"
 	intfName_3 = "eth3"
 	info("****checking****", intfName_1, '\n')
 	checkIntf(intfName_1)
 	info("****checking****", intfName_3, '\n')
 	checkIntf(intfName_3)
-
+	"""
 	info("****creating network****\n")
 	net = Mininet(listenPort = 6633)
 
-	mycontroller = RemoteController("muziController", ip = "192.168.0.1")
+	mycontroller = RemoteController("muziController", ip = "127.0.0.1")
 
 	switch_1 = net.addSwitch('s1')
 	switch_2 = net.addSwitch('s2')
 	switch_3 = net.addSwitch('s3')
-	switch_4 = net.addSwitch('s4')
+	#switch_4 = net.addSwitch('s4')
+	h1 = net.addHost('h1')
+	h2 = net.addHost('h2')
+
+
 
 	net.controllers = [mycontroller]
 
-	_intf_1 = Intf(intfName_1, node = switch_1, port = 1)
+	#_intf_1 = Intf(intfName_1, node = switch_1, port = 1)
 
 	net.addLink(switch_1, switch_2, 2, 1)# node1, node2, port1, port2
 	net.addLink(switch_2, switch_3, 2, 1)
-	net.addLink(switch_1, switch_4, 3, 1)
+	#net.addLink(switch_1, switch_4, 3, 1)
 
-	_intf_3 = Intf(intfName_3, node = switch_3, port = 2)
+	net.addLink(switch_1, h1, 1)
+	net.addLink(switch_2, h2, 2)
 
-	net.addLink(switch_4, switch_3, 2, 3)
+	#_intf_3 = Intf(intfName_3, node = switch_3, port = 2)
 
-	info("*****Adding hardware interface ", intfName_1, "to switch:" ,switch_1.name, '\n')
-	info("*****Adding hardware interface ", intfName_3, "to switch:" ,switch_3.name, '\n')
+	#net.addLink(switch_4, switch_3, 2, 3)
+
+	#info("*****Adding hardware interface ", intfName_1, "to switch:" ,switch_1.name, '\n')
+	#info("*****Adding hardware interface ", intfName_3, "to switch:" ,switch_3.name, '\n')
 
 	info("Node: you may need to reconfigure the interfaces for the Mininet hosts:\n", net.hosts, '\n')
 
